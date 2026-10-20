@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Emberly",
+    "slug": "emberly",
+    "version": "0.1.0",
+    "scheme": "emberly",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["android"],
+    "android": {
+      "package": "com.charmandiox9.emberly",
+      "allowBackup": false
+    },
+    "plugins": ["expo-router", "expo-sqlite", "expo-font"],
+    "experiments": { "typedRoutes": true }
+  }
+}
