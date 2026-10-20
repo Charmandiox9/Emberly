@@ -1,5 +1,19 @@
 # Progreso de Emberly
 
+## 20 de octubre de 2026: segundo incremento, movimientos y navegación
+
+- Implementados ingresos/gastos, edición y eliminación confirmada, nueve categorías iniciales, filtros y paginación estable por fecha/ID.
+- Inicio calcula saldo actual, ingresos/gastos del mes y cinco movimientos recientes; Estadísticas desglosa gastos por categoría. La administración de cuentas conserva explícitos los saldos iniciales.
+- Creados componentes de formulario y navegación por pestañas. El ocultamiento de montos se comparte durante la sesión y las consultas se recargan al recuperar foco, cancelando resultados obsoletos.
+- Migración 2 conserva cuentas del esquema anterior. Las escrituras validan referencias y agregados monetarios dentro de transacciones; la apertura de cuentas también protege el total actual contra desbordamiento.
+- Pruebas hasta ahora: 69 aprobadas, incluyendo actualización desde esquema 1, rollback de cambios, categorías incompatibles, fechas futuras, filtros, páginas del mismo día y errores de formulario.
+- Se conservan pendientes las transferencias, categorías personalizadas, edición/archivo de cuentas, metas y presupuestos. Se adelantó el resumen estadístico básico al integrar los movimientos; las fases no se declaran completas.
+- Incidencias corregidas: ColorValue de los iconos de pestañas y dependencias de recarga de consultas. Hubo parches que no coincidieron con líneas formateadas; se reaplicaron tras leer el contexto exacto.
+- Expo genera tipos correctos al reiniciar Metro, pero su watcher en Windows incluyó archivos ajenos a las rutas al añadir archivos con el servidor abierto. Se regeneraron desde el árbol completo; no se editaron tipos generados ni se desactivó TypeScript estricto. El puerto 8081 estaba ocupado y se usó temporalmente 8082.
+- Verificación final: `npm run verify` aprobado (tipos, lint, formato y 69 pruebas); `npm run export:android` aprobado (1870 módulos, bundle Hermes de aproximadamente 4,2 MB). Sin dependencias nuevas ni variables de entorno adicionales.
+- Incremento separado en un commit de dominio/persistencia/pruebas y otro de navegación/interfaz/documentación. El servidor temporal de Metro en 8082 se detuvo tras regenerar tipos.
+- Interfaz, teclado, TalkBack y puente SQLite pendientes de validación en Android físico; no se ha generado APK ni hecho push.
+
 ## 20 de octubre de 2026: build local y separación de commits
 
 - Ejecutados `npm run verify` y `npm run export:android` antes de guardar los cambios en Git. Ambos pasaron: tipos, lint, formato, 45 pruebas y bundle Hermes Android de 1844 módulos.

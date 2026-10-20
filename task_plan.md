@@ -6,7 +6,7 @@ Fecha de elaboración: 20 de octubre de 2026.
 
 Entregar una primera versión Android instalable, usable sin conexión, que permita administrar cuentas, ingresos, gastos, presupuestos y metas, consultar estadísticas y recibir acompañamiento positivo de Ember.
 
-La planificación está terminada y la fase 1 está en implementación. Las fases se marcan completas únicamente al cumplir sus criterios de salida. [AGENTS.md](AGENTS.md) define las reglas técnicas y [design.md](design.md) las visuales; este documento registra el orden y el alcance del trabajo.
+La fase 1 mantiene pendiente su validación física; se avanza en las tareas independientes de las fases 2 y 3. Las fases se marcan completas únicamente al cumplir sus criterios de salida. [AGENTS.md](AGENTS.md) define las reglas técnicas y [design.md](design.md) las visuales; este documento registra el orden y el alcance del trabajo.
 
 ## Alcance de la primera versión
 
@@ -62,12 +62,12 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 ### Fase 2: sistema visual y navegación
 
-**Estado:** pending. **Depende de:** fase 1.
+**Estado:** in_progress. **Depende de:** fase 1.
 
-- [ ] Implementar tokens de color, Nunito local, tipografía, espaciado y temas de `design.md`.
+- [x] Implementar tokens de color, Nunito local, tipografía, espaciado y temas de `design.md`.
 - [ ] Crear componentes reutilizables: botones, campos, tarjetas, filas de movimiento, selector de periodo, indicador de progreso y estados de pantalla.
 - [ ] Implementar navegación Inicio, Movimientos, Metas y Estadísticas; accesos a presupuestos, cuentas y ajustes.
-- [ ] Incorporar un adaptador compartido de notificaciones con `sonner-native` y un único `Toaster`, previa comprobación de compatibilidad.
+- [x] Incorporar un adaptador compartido de notificaciones con `sonner-native` y un único `Toaster`, previa comprobación de compatibilidad.
 - [ ] Diseñar la primera versión original de Ember y del símbolo de marca. Mantener la dirección 3D como referencia; optimizar tamaño y uso móvil de los assets elegidos.
 - [ ] Validar formularios con teclado, áreas seguras, TalkBack, fuentes grandes, ambos temas y movimiento reducido.
 
@@ -77,14 +77,14 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 ### Fase 3: cuentas, movimientos e inicio funcional
 
-**Estado:** pending. **Depende de:** fase 2.
+**Estado:** in_progress. **Depende de:** fase 2.
 
 - [ ] Crear, editar y archivar cuentas; registrar saldo inicial y definir restricciones de archivo/eliminación si hay movimientos.
 - [ ] Administrar categorías de ingreso y gasto conservando referencias de movimientos históricos.
-- [ ] Registrar, editar y eliminar ingresos y gastos; validar monto, moneda, cuenta, categoría y fecha.
+- [x] Registrar, editar y eliminar ingresos y gastos; validar monto, moneda, cuenta, categoría y fecha.
 - [ ] Registrar y revertir transferencias de manera atómica, impidiendo origen y destino idénticos y su doble conteo en estadísticas.
-- [ ] Mostrar saldos, ingresos/gastos del periodo y movimientos recientes en Inicio; permitir ocultar montos.
-- [ ] Implementar historial con filtros de periodo, tipo, categoría y cuenta; prever listas extensas sin cargar innecesariamente todos los registros.
+- [x] Mostrar saldos, ingresos/gastos del periodo y movimientos recientes en Inicio; permitir ocultar montos.
+- [x] Implementar historial con filtros de periodo, tipo, categoría y cuenta; prever listas extensas sin cargar innecesariamente todos los registros.
 - [ ] Probar cálculo de saldo, edición, eliminación, fallos de escritura, doble pulsación de guardar y persistencia tras reiniciar.
 
 **Criterio de salida:** el recorrido crear cuenta → registrar ingreso → registrar gasto → transferir → editar → reiniciar conserva exactamente los saldos esperados, también en modo avión. Una falla de persistencia no anuncia éxito ni deja una transferencia parcial.
@@ -164,5 +164,7 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 Se planificará al validar la beta: cuentas de usuario, respaldo remoto y sincronización, movimientos recurrentes, recordatorios y otras mejoras priorizadas por uso. Para nube, definir resolución de conflictos, escrituras idempotentes y aislamiento entre usuarios; elegir REST/GraphQL por necesidad y utilizar Prisma únicamente en backend con migraciones versionadas. No forma parte de la implementación inicial.
 
 ## Incidencias y estado de validación
+
+Segundo incremento: 69 pruebas, tipos, lint, formato y export Android aprobados. Se implementaron registro/edición/eliminación de ingresos y gastos, historial filtrable/paginado, saldos actuales y navegación Inicio/Movimientos/Estadísticas. Metas, transferencias y validación física siguen pendientes; no se cierran las fases 1, 2 o 3 por estos avances parciales.
 
 TypeScript, lint, 45 pruebas unitarias/de integración, export Android y 21 comprobaciones de Expo Doctor pasaron durante el primer incremento. Se conservan resultados e incidencias de entorno en `progress.md`. Falta autenticación EAS para generar el APK y acceso al Android físico para validar persistencia nativa, interfaz y accesibilidad; la fase 1 permanece abierta.

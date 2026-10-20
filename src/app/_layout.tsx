@@ -11,6 +11,8 @@ import { ActivityIndicator, StyleSheet, Text, View, useColorScheme } from 'react
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Toaster } from 'sonner-native';
+import { ServicesProvider } from '../application/services';
+import { PrivacyProvider } from '../shared/ui/amount';
 
 import { createExpoDatabase } from '../shared/storage/expo-database';
 import { migrateDatabase } from '../shared/storage/migrations';
@@ -74,12 +76,36 @@ export default function RootLayout(): ReactElement {
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <Suspense fallback={<LoadingScreen />}>
           <SQLiteProvider databaseName="emberly.db" onInit={initializeDatabase} useSuspense>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: theme.background },
-              }}
-            />
+            <ServicesProvider>
+              <PrivacyProvider>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: theme.background },
+                  }}
+                >
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="accounts"
+                    options={{
+                      headerShown: true,
+                      title: 'Cuentas',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
+                    name="movement"
+                    options={{
+                      headerShown: true,
+                      title: 'Movimiento',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                </Stack>
+              </PrivacyProvider>
+            </ServicesProvider>
           </SQLiteProvider>
         </Suspense>
         <Toaster theme={colorScheme === 'dark' ? 'dark' : 'light'} />

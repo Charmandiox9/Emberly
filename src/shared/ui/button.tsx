@@ -7,9 +7,15 @@ export interface ButtonProps {
   readonly label: string;
   readonly disabled?: boolean;
   readonly onPress: () => void;
+  readonly variant?: 'primary' | 'secondary';
 }
 
-export function Button({ label, disabled = false, onPress }: ButtonProps): ReactElement {
+export function Button({
+  label,
+  disabled = false,
+  onPress,
+  variant = 'primary',
+}: ButtonProps): ReactElement {
   const theme = useTheme();
   return (
     <Pressable
@@ -19,10 +25,15 @@ export function Button({ label, disabled = false, onPress }: ButtonProps): React
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: theme.primary, opacity: disabled ? 0.55 : pressed ? 0.8 : 1 },
+        {
+          backgroundColor: variant === 'primary' ? theme.primary : theme.surface,
+          opacity: disabled ? 0.55 : pressed ? 0.8 : 1,
+        },
       ]}
     >
-      <Text style={[styles.label, { color: theme.onPrimary }]}>{label}</Text>
+      <Text style={[styles.label, { color: variant === 'primary' ? theme.onPrimary : theme.text }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

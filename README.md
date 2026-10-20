@@ -5,12 +5,15 @@ React Native + Expo SDK 57, TypeScript estricto y persistencia local SQLite.
 
 ## Estado actual
 
-Primer incremento de la fase 1: crear cuentas manuales con saldo inicial en CLP,
-listar sus saldos iniciales y ocultar montos durante la sesión. Los movimientos,
-presupuestos, metas y estadísticas aún no están implementados.
+Segundo incremento: cuentas CLP, registro/edición/eliminación de ingresos y gastos,
+historial filtrable con paginación, saldos actuales y resumen mensual por categoría.
+Inicio, Movimientos y Estadísticas tienen navegación por pestañas; cuentas y formulario
+se abren como pantallas independientes. Transferencias, presupuestos, metas, categorías
+personalizadas, edición/archivo de cuentas y la mascota siguen pendientes.
 
-Los saldos que se muestran en esta entrega son **saldos iniciales**, no saldos
-calculados a partir de movimientos. No se cargan datos de ejemplo automáticamente.
+Inicio muestra el **saldo actual** calculado desde saldos iniciales y movimientos.
+El selector mensual filtra flujos e historial, sin convertirlo en saldo histórico.
+Cuentas identifica sus valores como saldos iniciales. No se cargan movimientos ficticios.
 Usa datos de prueba hasta que exista respaldo/restauración.
 
 ## Entorno y ejecución
@@ -83,11 +86,14 @@ proyecto no tiene publicación automática en Google Play.
 
 1. Abrir la aplicación y crear «Efectivo» con saldo `25.000`.
 2. Crear otra cuenta con saldo `-5.000`; el total inicial debe ser `$20.000`.
-3. Intentar guardar sin nombre o con `1,50`; verificar error sin nuevas cuentas.
-4. Ocultar montos y verificar que desaparezcan también en las filas de cuentas.
-5. Cerrar la app completamente y reabrir; verificar ambas cuentas y sus saldos.
-6. Con APK preview, repetir sin red. En Expo Go, cargar primero el bundle de desarrollo.
-7. Revisar tema oscuro, TalkBack, fuente ampliada y teclado sin ocultar los campos.
+3. Registrar un ingreso de `10.000` y un gasto de `3.000`: saldo `$27.000`, ingresos mensuales `$10.000` y gastos `$3.000`.
+4. Editar el gasto a `5.000`: saldo `$25.000`. Eliminarlo con confirmación: saldo `$30.000`.
+5. Revisar filtros por mes, tipo, cuenta y categoría. Con más de 30 registros, recorrer páginas sin repetir filas.
+6. Intentar guardar monto cero/negativo o fecha futura/inexistente: señalar el campo y conservar la entrada.
+7. Ocultar montos y recorrer pantallas: valores y etiquetas accesibles respetan la opción durante la sesión.
+8. Cerrar completamente y reabrir; verificar cuentas, movimientos y saldos. La ocultación se reinicia al cerrar la sesión de la app.
+9. Con APK preview, repetir sin red. En Expo Go, cargar primero el bundle de desarrollo.
+10. Revisar tema oscuro, TalkBack, fuente ampliada y teclado sin ocultar los campos.
 
 Registra resultados reales y build utilizado en `progress.md`. Estos pasos pendientes
 no deben interpretarse como verificaciones ya ejecutadas.
@@ -96,6 +102,9 @@ no deben interpretarse como verificaciones ya ejecutadas.
 
 - `src/app/`: rutas y composición de dependencias nativas.
 - `src/modules/accounts/`: dominio, caso de uso, repositorio SQLite y presentación de cuentas.
+- `src/modules/movements/`: registro, validación de borradores, historial y repositorio financiero.
+- `src/modules/dashboard/`: saldos actuales y flujos mensuales.
+- `src/application/`: composición de repositorios para las rutas.
 - `src/shared/domain/`: dinero y fechas independientes del framework.
 - `src/shared/storage/`: contratos, adaptador Expo y migraciones versionadas.
 - `src/shared/ui/`: tokens, botón y adaptador de notificaciones.
@@ -106,3 +115,7 @@ no deben interpretarse como verificaciones ya ejecutadas.
 El almacenamiento actual no está cifrado; no contiene credenciales ni usa servicios
 remotos. El respaldo automático Android está desactivado en la configuración inicial.
 No borrar datos de la aplicación para resolver errores de migración.
+
+Si al agregar rutas nuevas con Metro abierto aparecen errores de rutas tipadas en
+Windows, reinicia Metro para regenerar `.expo/types/router.d.ts` desde el árbol completo
+de `src/app`. El archivo es generado: conserva el tipado y evita editarlo a mano.

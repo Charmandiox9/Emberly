@@ -1,5 +1,14 @@
 # Contexto y decisiones de Emberly
 
+## Segundo incremento
+
+- La migración 2 agrega categorías y movimientos sin modificar la migración 1 aplicada. Las categorías se guardan en SQLite con tipo; una FK compuesta mantiene la coherencia entre tipo y categoría.
+- Los saldos se derivan de las cuentas y el libro de movimientos, sin mantener un segundo saldo mutable. Los agregados SQLite se leen como texto, se validan con BigInt y se convierten solo dentro del rango seguro.
+- Fechas futuras se rechazan en el caso de uso según el día local de America/Santiago. Se permiten saldos negativos reales. Editar conserva la auditoría de creación.
+- La selección mensual filtra flujos y movimientos; el saldo actual sigue incluyendo todas las fechas. La página de estadísticas inicial muestra totales por categoría en texto, con gráficos y comparativas pendientes.
+- Navegación actual: Inicio, Movimientos y Estadísticas; cuentas/formulario fuera de las pestañas. Metas se incorporará cuando su funcionalidad exista.
+- En Windows, el watcher de tipos Expo produjo rutas ajenas a `src/app` después de crear archivos con Metro abierto. Un reinicio regeneró correctamente el árbol; mantener tipos generados fuera de Git y reiniciar Metro si ocurre.
+
 Actualizado: 20 de octubre de 2026. Este archivo conserva observaciones; las reglas están en [AGENTS.md](AGENTS.md), el diseño en [design.md](design.md) y la secuencia de ejecución en [task_plan.md](task_plan.md).
 
 ## Confirmado por la conversación

@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatMoney, parseMoney, type Money } from '../../../shared/domain/money';
 import { Button } from '../../../shared/ui/button';
+import { usePrivacy } from '../../../shared/ui/amount';
 import { notifications } from '../../../shared/ui/notifications';
 import { typography, useTheme } from '../../../shared/ui/theme';
 import {
@@ -40,7 +41,7 @@ export function AccountsScreen({ repository }: AccountsScreenProps): ReactElemen
   const [nameError, setNameError] = useState('');
   const [balanceError, setBalanceError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  const { hidden, toggle } = usePrivacy();
   const savingLock = useRef(false);
 
   const readAccounts = useCallback(async (): Promise<readonly Account[]> => {
@@ -177,17 +178,14 @@ export function AccountsScreen({ repository }: AccountsScreenProps): ReactElemen
                     ? 'Cada plan empieza por saber dónde estás.'
                     : 'Saldo inicial total de tus cuentas.'}
                 </Text>
-                <Button
-                  label={hidden ? 'Mostrar montos' : 'Ocultar montos'}
-                  onPress={() => setHidden((value) => !value)}
-                />
+                <Button label={hidden ? 'Mostrar montos' : 'Ocultar montos'} onPress={toggle} />
               </>
             )}
           </View>
           {accounts.length > 0 && loadState === 'ready' ? (
             <View style={styles.section}>
               <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
-                Tus cuentas
+                Saldos iniciales por cuenta
               </Text>
               {accounts.map((account) => (
                 <View key={account.id} style={[styles.account, { backgroundColor: theme.surface }]}>
