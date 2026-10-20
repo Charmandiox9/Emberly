@@ -21,6 +21,37 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX accounts_created_at ON accounts(created_at, id);
     `,
   },
+  {
+    version: 2,
+    sql: `
+      CREATE TABLE categories (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 60),
+        kind TEXT NOT NULL CHECK (kind IN ('income', 'expense')),
+        UNIQUE (id, kind)
+      );
+      INSERT INTO categories (id, name, kind) VALUES
+        ('salary', 'Sueldo', 'income'), ('extra', 'Ingreso extra', 'income'),
+        ('other-income', 'Otros ingresos', 'income'),
+        ('food', 'Alimentación', 'expense'), ('transport', 'Transporte', 'expense'),
+        ('home', 'Hogar', 'expense'), ('health', 'Salud', 'expense'),
+        ('leisure', 'Ocio', 'expense'), ('other-expense', 'Otros gastos', 'expense');
+      CREATE TABLE movements (
+        id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) BETWEEN 1 AND 128),
+        account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+        category_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('income', 'expense')),
+        amount_minor INTEGER NOT NULL CHECK (typeof(amount_minor) = 'integer'
+          AND amount_minor BETWEEN 1 AND 9007199254740991),
+        description TEXT NOT NULL CHECK (length(trim(description)) BETWEEN 1 AND 120),
+        business_date TEXT NOT NULL CHECK (length(business_date) = 10),
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (category_id, kind) REFERENCES categories(id, kind) ON DELETE RESTRICT
+      );
+      CREATE INDEX movements_date_id ON movements(business_date DESC, id DESC);
+      CREATE INDEX movements_account_date ON movements(account_id, business_date);
+    `,
+  },
 ];
 
 export const schemaVersion = migrations.at(-1)?.version ?? 0;

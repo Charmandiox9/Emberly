@@ -37,6 +37,10 @@ export function sumMoney(values: readonly Money[]): Money {
     createMoney(value.amountMinor, value.currency);
     total += BigInt(value.amountMinor);
   }
+  return moneyFromInteger(total);
+}
+
+export function moneyFromInteger(total: bigint): Money {
   if (total > BigInt(Number.MAX_SAFE_INTEGER) || total < BigInt(Number.MIN_SAFE_INTEGER)) {
     throw new Error('El resultado supera el rango seguro.');
   }

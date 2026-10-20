@@ -20,11 +20,26 @@ el registro original. Los INSERT usan parámetros; los nombres no se concatenan 
 El caso de uso termina cuando el repositorio confirma el guardado. Las filas de la
 base se validan al leer, antes de entregarse al dominio.
 
-## Movimientos y transferencias: especificado, pendiente
+## Movimientos: implementado
 
-Ingresos y gastos tendrán monto positivo y tipo explícito. El saldo será saldo inicial
-más ingresos menos gastos y efectos de transferencias. Se permitirán saldos negativos,
-porque el registro debe poder reflejar una deuda real; la interfaz lo explicará.
+Ingresos y gastos tienen monto positivo, tipo explícito, cuenta, categoría, concepto,
+fecha de negocio y auditoría. El caso de uso rechaza fechas futuras en America/Santiago.
+Se permiten saldos negativos para reflejar deuda real.
+
+El saldo actual suma saldos iniciales e ingresos y resta gastos de todas las fechas
+registradas. Los flujos mensuales excluyen el saldo inicial y usan un rango cerrado
+al inicio del mes y abierto al inicio del siguiente.
+
+Guardar, editar y eliminar son transaccionales y comprueban saldos y totales seguros
+antes de confirmar. La edición conserva el instante de creación. La apertura de una
+cuenta también valida el saldo total actual dentro de una transacción.
+
+Los agregados enteros SQLite se leen como texto y validan con BigInt antes de convertir
+a Money, evitando conversiones JS imprecisas. Un error de agregado revierte la escritura.
+La FK compuesta categoría/tipo impide usar categorías de ingreso en gastos o viceversa.
+El historial filtra mes, tipo, cuenta y categoría; pagina por fecha e ID descendentes.
+
+## Transferencias: especificado, pendiente
 
 Las transferencias tendrán dos lados relacionados y se guardarán/revertirán en una
 transacción. No entrarán en totales de ingresos/gastos. Archivar una cuenta preservará
@@ -40,7 +55,9 @@ su historial. Los detalles de edición y eliminación se resolverán con esos ca
 
 ## Persistencia y cambios de esquema
 
-SQLite guarda cuentas en esquema versión 1. `PRAGMA user_version` registra la versión;
+SQLite guarda cuentas, categorías y movimientos en esquema versión 2. La actualización
+desde versión 1 conserva las cuentas y crea las categorías una sola vez.
+`PRAGMA user_version` registra la versión;
 las migraciones y su versión se aplican dentro de una transacción con conexión propia
 y `BEGIN IMMEDIATE` en Expo. Se activan las claves foráneas antes de iniciar cada
 transacción, porque ese ajuste es específico de cada conexión SQLite.

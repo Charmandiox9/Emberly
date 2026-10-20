@@ -1,5 +1,6 @@
-import { createMoney } from '../../../shared/domain/money';
-import type { DatabaseRow, SqlExecutor } from '../../../shared/storage/database';
+import { createMoney, sumMoney } from '../../../shared/domain/money';
+import { readAccountBalances } from '../../../shared/storage/account-balances';
+import type { Database, DatabaseRow } from '../../../shared/storage/database';
 import type { AccountRepository } from '../application/account-repository';
 import { createAccount, type Account } from '../domain/account';
 
@@ -22,7 +23,7 @@ function readAccount(row: DatabaseRow): Account {
 }
 
 export class SqliteAccountRepository implements AccountRepository {
-  constructor(private readonly database: SqlExecutor) {}
+  constructor(private readonly database: Database) {}
 
   async list(): Promise<readonly Account[]> {
     const rows = await this.database.all(
@@ -33,16 +34,19 @@ export class SqliteAccountRepository implements AccountRepository {
 
   async save(account: Account): Promise<void> {
     const validated = createAccount(account);
-    await this.database.run(
-      `INSERT INTO accounts (id, name, initial_balance_minor, currency, created_at)
+    await this.database.transaction(async (transaction) => {
+      await transaction.run(
+        `INSERT INTO accounts (id, name, initial_balance_minor, currency, created_at)
        VALUES (?, ?, ?, ?, ?)`,
-      [
-        validated.id,
-        validated.name,
-        validated.initialBalance.amountMinor,
-        validated.initialBalance.currency,
-        validated.createdAt,
-      ],
-    );
+        [
+          validated.id,
+          validated.name,
+          validated.initialBalance.amountMinor,
+          validated.initialBalance.currency,
+          validated.createdAt,
+        ],
+      );
+      sumMoney((await readAccountBalances(transaction)).map((balance) => balance.balance));
+    });
   }
 }

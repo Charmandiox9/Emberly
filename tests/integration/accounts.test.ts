@@ -5,9 +5,12 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openAccount, SqliteAccountRepository } from '../../src/modules/accounts';
-import { createAccount } from '../../src/modules/accounts/domain/account';
 import { createMoney } from '../../src/shared/domain/money';
-import { migrateDatabase, readSchemaVersion } from '../../src/shared/storage/migrations';
+import {
+  migrateDatabase,
+  readSchemaVersion,
+  schemaVersion,
+} from '../../src/shared/storage/migrations';
 import { openTestDatabase, type TestDatabase } from '../helpers/node-database';
 
 const sample = {
@@ -31,7 +34,7 @@ describe('cuentas y migraciones sobre SQLite real', () => {
     const repository = new SqliteAccountRepository(database);
     await openAccount(repository, sample);
     await migrateDatabase(database);
-    expect(await readSchemaVersion(database)).toBe(1);
+    expect(await readSchemaVersion(database)).toBe(schemaVersion);
     expect(await repository.list()).toEqual([sample]);
   });
 
@@ -64,7 +67,13 @@ describe('cuentas y migraciones sobre SQLite real', () => {
   it('revierte escrituras relacionadas si una operación falla', async () => {
     await expect(
       database.transaction(async (transaction) => {
-        await new SqliteAccountRepository(transaction).save(createAccount(sample));
+        await transaction.run('INSERT INTO accounts VALUES (?, ?, ?, ?, ?)', [
+          sample.id,
+          sample.name,
+          sample.initialBalance.amountMinor,
+          sample.initialBalance.currency,
+          sample.createdAt,
+        ]);
         throw new Error('Interrupción simulada');
       }),
     ).rejects.toThrow('Interrupción simulada');
@@ -128,7 +137,7 @@ it('revierte una migración fallida y permite reintentar sin pérdida de datos p
     });
     await database.exec('DROP TABLE accounts_created_at');
     await migrateDatabase(database);
-    expect(await readSchemaVersion(database)).toBe(1);
+    expect(await readSchemaVersion(database)).toBe(schemaVersion);
   } finally {
     database.close();
   }
