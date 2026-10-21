@@ -15,14 +15,20 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run format:check",
+    "verify": "npm run typecheck && npm run api:typecheck && npm run lint && npm test && npm run format:check",
     "export:android": "expo export --platform android",
+    "api:dev": "wrangler dev --config api/wrangler.jsonc",
+    "api:deploy": "wrangler deploy --config api/wrangler.jsonc",
+    "api:typecheck": "tsc --project api/tsconfig.json",
     "build:android:development": "npx eas-cli build --platform android --profile development",
     "build:android:preview": "npx eas-cli build --platform android --profile preview"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/ui": "~57.0.25",
+    "@neondatabase/serverless": "^1.2.0",
+    "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-native-google-signin/google-signin": "^16.1.5",
     "expo": "~57.0.30",
     "expo-constants": "~57.0.22",
     "expo-crypto": "~57.0.4",
@@ -38,6 +44,9 @@
     "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
+    "firebase": "^13.0.0",
+    "hono": "^4.13.13",
+    "jose": "^6.2.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -50,6 +59,7 @@
     "sonner-native": "^0.27.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261021.1",
     "@types/node": "^24.19.2",
     "@types/react": "~19.2.2",
     "eslint": "9.39.5",
@@ -58,6 +68,7 @@
     "prettier": "^3.9.10",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.0",
-    "vitest": "^4.1.12"
+    "vitest": "^4.1.12",
+    "wrangler": "^4.151.3"
   }
 }

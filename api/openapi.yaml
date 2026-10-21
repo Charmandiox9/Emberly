@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Emberly API
+  version: 0.1.0
+  description: API REST inicial para perfiles autenticados de Emberly.
+servers:
+  - url: https://emberly-api.example.workers.dev
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: API disponible
+  /v1/me:
+    put:
+      operationId: ensureMyProfile
+      security:
+        - firebaseBearer: []
+      responses:
+        '200':
+          description: Perfil remoto creado o existente de forma idempotente
+        '401':
+          description: Token Firebase ausente, vencido o no válido
+        '503':
+          description: Perfil temporalmente no disponible
+components:
+  securitySchemes:
+    firebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID token
