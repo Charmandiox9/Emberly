@@ -15,6 +15,7 @@ import { chartPercentage, type AmountChange, type StatisticsRepository } from '.
 
 interface StatisticsScreenProps {
   readonly repository: StatisticsRepository;
+  readonly onReview: () => Promise<void>;
   readonly onHistory: (filters: HistoryFilters) => void;
 }
 interface ComparisonProps {
@@ -53,13 +54,20 @@ function Comparison({ label, current, previous, change }: ComparisonProps): Reac
   );
 }
 
-export function StatisticsScreen({ repository, onHistory }: StatisticsScreenProps): ReactElement {
+export function StatisticsScreen({
+  repository,
+  onReview,
+  onHistory,
+}: StatisticsScreenProps): ReactElement {
   const theme = useTheme();
   const { hidden, toggle } = usePrivacy();
   const [month, setMonth] = useState(() =>
     businessDateAt(new Date(), 'America/Santiago').value.slice(0, 7),
   );
-  const read = useCallback(() => repository.read(month), [repository, month]);
+  const read = useCallback(() => {
+    void onReview().catch(() => undefined);
+    return repository.read(month);
+  }, [onReview, repository, month]);
   const { state, reload } = useFocusResource(read, month);
   return (
     <Screen title="Tu mes en números">

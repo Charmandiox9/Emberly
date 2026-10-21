@@ -13,6 +13,7 @@ const tables = [
   'transfers',
   'attachments',
   'goals',
+  'goal_images',
   'goal_allocations',
   'budgets',
   'reminder_settings',
@@ -27,6 +28,8 @@ const tables = [
   'sync_order',
   'attachment_cleanup',
   'attachment_outbox',
+  'ember_activity_days',
+  'ember_achievements',
 ] as const;
 
 interface BackupPayload {
@@ -93,7 +96,13 @@ function readPayload(contents: string): BackupPayload {
   }
   if (!object(parsed) || parsed['format'] !== 'emberly-local-backup' || parsed['version'] !== 1)
     throw new Error('El archivo no es un respaldo de Emberly compatible.');
-  if (parsed['schemaVersion'] !== schemaVersion)
+  const backupSchemaVersion = parsed['schemaVersion'];
+  if (
+    typeof backupSchemaVersion !== 'number' ||
+    (backupSchemaVersion !== schemaVersion &&
+      backupSchemaVersion !== schemaVersion - 1 &&
+      backupSchemaVersion !== schemaVersion - 2)
+  )
     throw new Error(
       'El respaldo pertenece a otra versión de los datos. Actualiza Emberly o usa un respaldo compatible.',
     );
@@ -104,15 +113,28 @@ function readPayload(contents: string): BackupPayload {
   if (!object(parsed['tables']) || !object(parsed['attachmentFiles']))
     throw new Error('El respaldo está incompleto.');
   const sourceTables = parsed['tables'];
+  const legacyTables: readonly string[] =
+    backupSchemaVersion === schemaVersion - 2
+      ? ['goal_images', 'ember_activity_days', 'ember_achievements']
+      : backupSchemaVersion === schemaVersion - 1
+        ? ['goal_images']
+        : [];
+  const expectedTables = tables.filter((table) => !legacyTables.includes(table));
   if (
-    Object.keys(sourceTables).length !== tables.length ||
-    tables.some((table) => !(table in sourceTables))
+    Object.keys(sourceTables).length !== expectedTables.length ||
+    expectedTables.some((table) => !(table in sourceTables))
   )
     throw new Error('El respaldo no contiene todas las tablas esperadas.');
+  const normalizedTables: Record<string, readonly DatabaseRow[]> = {};
   for (const table of tables) {
     const rows: unknown = sourceTables[table];
+    if (rows === undefined && legacyTables.includes(table)) {
+      normalizedTables[table] = [];
+      continue;
+    }
     if (!Array.isArray(rows) || !rows.every(object))
       throw new Error(`Los datos de ${table} no son válidos.`);
+    normalizedTables[table] = rows;
   }
   const attachmentFiles: Record<string, string> = {};
   for (const [id, data] of Object.entries(parsed['attachmentFiles'])) {
@@ -126,9 +148,9 @@ function readPayload(contents: string): BackupPayload {
   return {
     format: 'emberly-local-backup',
     version: 1,
-    schemaVersion,
+    schemaVersion: backupSchemaVersion,
     exportedAt,
-    tables: sourceTables as Readonly<Record<string, readonly DatabaseRow[]>>,
+    tables: normalizedTables,
     attachmentFiles,
   };
 }
@@ -172,6 +194,16 @@ function backupFiles(payload: BackupPayload): readonly BackupAttachment[] {
     ready.add(id);
     files.push({ id, sha256, data });
   }
+  for (const row of payload.tables['goal_images'] ?? []) {
+    const id = row['image_id'];
+    const sha256 = row['sha256'];
+    if (typeof id !== 'string' || typeof sha256 !== 'string')
+      throw new Error('Falta la foto de una meta del respaldo.');
+    const data = payload.attachmentFiles[id];
+    if (typeof data !== 'string') throw new Error('Falta la foto de una meta del respaldo.');
+    ready.add(id);
+    files.push({ id, sha256, data });
+  }
   if (Object.keys(payload.attachmentFiles).some((id) => !ready.has(id)))
     throw new Error('El respaldo incluye archivos sin metadatos asociados.');
   if (rows.some((row) => row['state'] !== 'ready'))
@@ -203,6 +235,30 @@ async function replaceRows(database: Database, payload: BackupPayload): Promise<
         );
       }
     }
+    if (payload.schemaVersion === schemaVersion - 2) {
+      await transaction.exec(`
+        INSERT OR IGNORE INTO ember_activity_days (activity_date, activity_type, first_recorded_at)
+        SELECT substr(created_at, 1, 10), 'record', MIN(created_at) FROM movements GROUP BY substr(created_at, 1, 10);
+        INSERT OR IGNORE INTO ember_activity_days (activity_date, activity_type, first_recorded_at)
+        SELECT substr(created_at, 1, 10), 'record', MIN(created_at) FROM transfers GROUP BY substr(created_at, 1, 10);
+        INSERT OR IGNORE INTO ember_activity_days (activity_date, activity_type, first_recorded_at)
+        SELECT substr(created_at, 1, 10), 'planning', MIN(created_at) FROM budgets GROUP BY substr(created_at, 1, 10);
+        INSERT OR IGNORE INTO ember_activity_days (activity_date, activity_type, first_recorded_at)
+        SELECT substr(created_at, 1, 10), 'planning', MIN(created_at) FROM goals GROUP BY substr(created_at, 1, 10);
+        INSERT OR IGNORE INTO ember_activity_days (activity_date, activity_type, first_recorded_at)
+        SELECT substr(created_at, 1, 10), 'planning', MIN(created_at) FROM goal_allocations GROUP BY substr(created_at, 1, 10);
+        INSERT OR IGNORE INTO ember_achievements (achievement_id, earned_at)
+        SELECT 'first-record', MIN(first_recorded_at) FROM ember_activity_days WHERE activity_type = 'record' HAVING COUNT(*) > 0;
+        INSERT OR IGNORE INTO ember_achievements (achievement_id, earned_at)
+        SELECT 'first-plan', MIN(first_recorded_at) FROM ember_activity_days WHERE activity_type = 'planning' HAVING COUNT(*) > 0;
+        INSERT OR IGNORE INTO ember_achievements (achievement_id, earned_at)
+        SELECT 'first-review', MIN(first_recorded_at) FROM ember_activity_days WHERE activity_type = 'review' HAVING COUNT(*) > 0;
+        INSERT OR IGNORE INTO ember_achievements (achievement_id, earned_at)
+        SELECT 'three-active-days', MAX(first_recorded_at) FROM ember_activity_days HAVING COUNT(DISTINCT activity_date) >= 3;
+        INSERT OR IGNORE INTO ember_achievements (achievement_id, earned_at)
+        SELECT 'ten-active-days', MAX(first_recorded_at) FROM ember_activity_days HAVING COUNT(DISTINCT activity_date) >= 10;
+      `);
+    }
     await transaction.exec(`PRAGMA user_version = ${schemaVersion}`);
     for (const trigger of triggers) await transaction.exec(String(trigger['sql']));
   });
@@ -213,9 +269,10 @@ export async function restoreLocalBackup(
   files: BackupFilePort,
   uri: string,
 ): Promise<void> {
-  const currentRows = await database.all(
-    "SELECT id, sha256 FROM attachments WHERE state = 'ready'",
-  );
+  const currentRows = [
+    ...(await database.all("SELECT id, sha256 FROM attachments WHERE state = 'ready'")),
+    ...(await database.all('SELECT image_id AS id, sha256 FROM goal_images')),
+  ];
   const current = currentRows.map((row): BackupFileIdentity => {
     if (typeof row['id'] !== 'string' || typeof row['sha256'] !== 'string')
       throw new Error('Los comprobantes actuales no son válidos.');
@@ -288,6 +345,13 @@ export async function exportLocalBackup(
     const hash = row['sha256'];
     if (typeof id !== 'string' || typeof hash !== 'string')
       throw new Error('Los metadatos de un comprobante no son válidos.');
+    attachmentFiles[id] = await files.readAttachment(id, hash);
+  }
+  for (const row of rowsByTable['goal_images'] ?? []) {
+    const id = row['image_id'];
+    const hash = row['sha256'];
+    if (typeof id !== 'string' || typeof hash !== 'string')
+      throw new Error('Los metadatos de una foto de meta no son válidos.');
     attachmentFiles[id] = await files.readAttachment(id, hash);
   }
 

@@ -52,11 +52,11 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 - [x] Crear el proyecto Expo con TypeScript estricto y Expo Router, un único lockfile y configuración Android.
 - [x] Configurar lint, formato, chequeo de tipos y herramientas de pruebas unitarias y de integración compatibles con el proyecto.
 - [x] Definir módulos y contratos públicos para cuentas, movimientos, presupuestos y metas.
-- [ ] Definir el modelo y los contratos de hábitos junto con la progresión de Ember en fase 5.
+- [x] Definir el modelo y los contratos iniciales de hábitos junto con la progresión de Ember en fase 5; validación en Android pendiente.
 - [x] Especificar dinero, redondeo, límites de enteros, fecha de negocio, zona horaria, saldo inicial y transferencias.
 - [x] Definir las metas como asignaciones sobre dinero existente: un aporte no crea ingresos ni duplica gastos. Especificar límites, retiros y comportamiento si se modifica un movimiento relacionado.
 - [x] Preparar SQLite, migraciones versionadas, control de versión y adaptadores de persistencia; probar apertura, escritura y actualización con SQLite real en Node.
-- [ ] Verificar apertura, escritura, migración y persistencia tras reinicio con SQLite nativo en Android físico.
+- [x] Verificar apertura, formularios principales, persistencia y navegación en el cliente Android de prueba, según confirmación del usuario el 21 de octubre de 2026. La regresión de la migración 11 queda cubierta en SQLite real; falta probar la foto de meta en el teléfono.
 - [x] Crear `.gitignore`, `README.md`, documentación de dominio, ADR de arquitectura inicial y `CHANGELOG.md`. Crear `.env.example` documentado al introducir variables; no inventar variables innecesarias.
 - [x] Configurar perfiles EAS de desarrollo, preview y producción en `eas.json`.
 - [ ] Generar una compilación de desarrollo e instalarla en Android físico para validar el flujo sin Android Studio.
@@ -73,9 +73,14 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 - [x] Implementar tokens de color, Nunito local, tipografía, espaciado y temas de `design.md`.
 - [x] Crear componentes reutilizables para botones, campos, tarjetas, filas, selector de periodo, progreso y estados de pantalla.
-- [x] Implementar navegación Inicio, Movimientos, Metas, Estadísticas y Más; agrupar cuentas, categorías, presupuestos y ajustes en Más.
+- [x] Implementar navegación principal Inicio, Gastos, Cuentas, Metas y Más; abrir Estadísticas desde Más.
 - [x] Incorporar un adaptador compartido de notificaciones con `sonner-native` y un único `Toaster`, previa comprobación de compatibilidad.
-- [ ] Diseñar la primera versión original de Ember y del símbolo de marca. Mantener la dirección 3D como referencia; optimizar tamaño y uso móvil de los assets elegidos.
+- [x] Crear e integrar una ilustración original base de Ember, con fondo transparente y optimizada a 512 × 512 para uso móvil.
+- [ ] Crear el símbolo de marca y variantes de Chispa/Flarely, expresiones y celebraciones descartables.
+- [x] Reordenar Inicio con bienvenida animada de Ember, resumen de dinero, acciones rápidas y últimos gastos; la animación respeta movimiento reducido.
+- [ ] Ampliar Gastos con gráficos accesibles por categoría y filtros de cuenta/periodo integrados en el resumen.
+- [x] Desde Cuentas, abrir movimientos ya filtrados por cuenta; mantener edición y archivo/reactivación.
+- [ ] Validar el prototipo Three.js solo con modelo GLB animable y build Android instalado; conservar PNG animado como fallback.
 - [ ] Validar formularios con teclado, áreas seguras, TalkBack, fuentes grandes, ambos temas y movimiento reducido.
 
 **Criterio de salida:** navegación completa y componentes revisados en Android con datos ficticios claramente separados del uso real; errores y estados vacíos comprensibles. Los cambios nativos tienen build compatible y la entrega de código cumple las comprobaciones previas al commit.
@@ -90,8 +95,9 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 - [x] Administrar categorías de ingreso y gasto: crear, renombrar, archivar/reactivar y conservar referencias de movimientos históricos. Validación física pendiente.
 - [x] Registrar, editar y eliminar ingresos y gastos; validar monto, moneda, cuenta, categoría y fecha.
 - [x] Registrar y anular transferencias atómicas con auditoría, cuentas diferentes y sin doble conteo; historial separado por mes/cuenta y paginación. Validación física pendiente.
-- [x] Mostrar saldos, ingresos/gastos del periodo y movimientos recientes en Inicio; permitir ocultar montos.
-- [x] Implementar historial con filtros de periodo, tipo, categoría y cuenta; prever listas extensas sin cargar innecesariamente todos los registros.
+- [x] Mostrar saldos e ingresos/gastos del periodo en Inicio; permitir ocultar montos y ver los tres gastos recientes por separado.
+- [x] Ofrecer acciones rápidas en Inicio para registrar gasto/ingreso y abrir Cuentas; preservar el tipo elegido al abrir el formulario.
+- [x] Implementar historial con filtros de periodo, tipo, categoría y cuenta; permitir abrirlo desde una cuenta con ese filtro preseleccionado.
 - [x] Cubrir cálculo de saldo, edición, eliminación, fallos de escritura, idempotencia y persistencia con pruebas unitarias/de integración en SQLite.
 - [ ] Verificar el recorrido y persistencia tras reiniciar en Android físico, incluido modo avión.
 
@@ -116,11 +122,12 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 ### Fase 3B: Google, PostgreSQL, R2 y sincronización
 
-**Estado:** pending. **Depende de:** fase 3A y configuración de servicios.
+**Estado:** in_progress. **Depende de:** fase 3A y configuración de servicios. Primer Worker REST, verificación Firebase y perfil mínimo Neon preparados; todavía no hay credenciales ni sincronización de datos financieros.
 
-- [ ] Confirmados Neon para PostgreSQL, Firebase Auth para Google y R2 para objetos. Workers para API aceptado al continuar con el stack propuesto; verificar cuotas/costes antes de desplegar.
+- [x] Seleccionar Neon para PostgreSQL, Firebase Auth para Google y R2 para objetos. Workers para API aceptado; verificar cuotas/costes al configurar recursos.
 - [ ] Implementar Google con build EAS de desarrollo, separación de perfiles y vinculación explícita de los datos locales.
-- [ ] Crear API REST autenticada, contratos/OpenAPI, migraciones PostgreSQL, autorización por propietario e idempotencia transaccional.
+- [x] Crear scaffold API REST con health check, verificación de ID token Firebase, contrato OpenAPI inicial y migración PostgreSQL del perfil mínimo.
+- [ ] Completar APIs REST para sincronización financiera autenticada, autorización por propietario e idempotencia transaccional.
 - [ ] Sincronizar salida por lotes y descarga por cursor; detectar conflictos y propagar eliminaciones sin sobrescribir cambios locales pendientes.
 - [ ] Añadir disparadores por inicio, primer plano, escritura y recuperación de red; reintentos acotados con retroceso, acción manual y estado visible. Evaluar tareas oportunistas de fondo.
 - [ ] Autorizar subida/descarga privada R2 con URLs temporales, verificar objetos y finalizar metadatos; recuperar fallos y limpiar huérfanos.
@@ -138,6 +145,7 @@ La fase 3A puede avanzar sin servicios contratados; 3B requiere configurar los p
 - [x] Crear y editar presupuestos por categoría y mes; calcular gastado, disponible y exceso desde movimientos reales. Eliminación confirmada sin borrar movimientos. Validación física pendiente.
 - [x] Definir y probar meses independientes sin arrastre automático; conservar presupuestos de categorías archivadas y permitir corregir sus límites.
 - [x] Crear metas con nombre, monto objetivo y fecha opcional; mostrar asignado, restante y exceso. Validación física pendiente.
+- [x] Adjuntar una foto local de galería/cámara a cada meta, guardarla como archivo persistente e incluirla en respaldo/restauración.
 - [x] Registrar y retirar asignaciones a metas según las reglas de dominio, sin alterar el saldo total; historial paginado e idempotencia.
 - [x] Evitar sobreasignación del disponible global; mostrar faltante tras gastos o correcciones sin bloquear la realidad financiera y permitir retirar asignaciones.
 - [x] Actualizar presupuestos ante edición/eliminación o cambio de mes/categoría de movimientos y mostrar disponible/exceso.
@@ -151,13 +159,13 @@ La fase 3A puede avanzar sin servicios contratados; 3B requiere configurar los p
 
 ### Fase 5: estadísticas, notificaciones y acompañamiento de Ember
 
-**Estado:** in_progress. **Depende de:** fase 4. Estadísticas y recordatorios locales implementados; validación física, push y Ember siguen pendientes.
+**Estado:** in_progress. **Depende de:** fase 4. Estadísticas, recordatorios locales y progresión inicial textual de Ember implementados; siguen pendientes validación física, push e ilustraciones/celebraciones originales.
 
 - [x] Añadir resúmenes por mes, gastos por categoría, comparación en pesos y tendencia de seis meses con valores textuales accesibles. Validación física pendiente.
 - [x] Reconciliar cada total y categoría con todas las páginas del historial filtrado; excluir transferencias, saldos iniciales y asignaciones de metas. Accesos al historial con filtros validados.
-- [ ] Definir eventos y umbrales de hábitos: primer registro, revisiones y constancia; documentar cuándo se concede cada logro.
-- [ ] Implementar expresiones y celebraciones originales de Ember, progresión Chispa → Ember → Flarely y persistencia de logros.
-- [ ] Evitar recompensas duplicadas por reintentos, reapertura o edición de un mismo registro. No penalizar dificultades económicas ni ausencia.
+- [x] Definir eventos y umbrales de hábitos: primer registro, revisiones y constancia; documentar cuándo se concede cada logro.
+- [x] Implementar etapas Chispa → Ember → Flarely y persistencia local de hitos; quedan pendientes ilustraciones, expresiones y celebraciones originales.
+- [x] Evitar recompensas duplicadas por reintentos, reapertura o edición de un mismo registro. No penalizar dificultades económicas ni ausencia.
 - [x] Añadir recordatorio diario local configurable, permisos en contexto, canal privado y contenido genérico; reconciliación persistente sin duplicar programaciones. Build nativo actualizado y validación física pendientes.
 - [ ] Añadir push Expo/FCM para eventos remotos definidos, con tokens por usuario/dispositivo y prueba de recepción/apertura en Android físico.
 - [ ] Aplicar movimiento reducido y permitir omitir celebraciones. Revisar rendimiento con historial amplio y assets optimizados.
@@ -172,9 +180,12 @@ La fase 3A puede avanzar sin servicios contratados; 3B requiere configurar los p
 
 - [x] Exportar respaldo JSON versionado con tablas SQLite, colas, preferencias y comprobantes verificados; avisar que contiene información financiera sin cifrar.
 - [x] Restaurar con validación previa de esquema, columnas, valores y comprobantes; reemplazo confirmado, respaldo previo, transacción SQLite y recuperación de archivos tras interrupciones. La fusión se deja fuera de alcance.
-- [ ] Probar exportar → restaurar en una instalación limpia y comparar saldos, movimientos, presupuestos, metas y logros.
+- [x] Probar en SQLite real la exportación/restauración de cuentas y comprobantes, incluida sustitución de adjuntos, y comprobar rollback si una fila viola una restricción.
+- [ ] En Android, probar exportar → restaurar en una instalación limpia y comparar saldos, movimientos, presupuestos, metas y logros.
 - [x] Incluir comprobantes y restaurar sus identificadores y cola local; la sincronización remota no se ejecuta automáticamente.
-- [ ] Probar archivos corruptos, versiones incompatibles e interrupciones sin destruir los datos actuales.
+- [x] Probar que una versión incompatible se rechaza sin destruir los datos actuales.
+- [x] Probar que un JSON corrupto se rechaza sin modificar los datos actuales.
+- [ ] Probar interrupciones reales sin destruir los datos actuales.
 - [ ] Ejecutar el recorrido completo: primer uso, carga manual, planificación, estadísticas, cierre/reapertura, modo avión y recuperación.
 - [ ] Revisar accesibilidad, temas, teclado, listas extensas, privacidad de logs y permisos; documentar resultados y límites de lo probado.
 - [ ] Preparar iconos, splash, identificador Android y versión; generar APK preview instalable con build exitoso del estado final.

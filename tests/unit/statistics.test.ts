@@ -94,4 +94,9 @@ describe('filtros del historial desde estadísticas', () => {
       historyFilters({ month: '2026-99', kind: ['income'], categoryId: 'a'.repeat(129) }),
     ).toEqual({});
   });
+  it('conserva el filtro de cuenta al abrir el historial desde una cuenta', () => {
+    expect(historyFilters({ accountId: 'account-1' })).toEqual({ accountId: 'account-1' });
+    expect(historyFilters({ accountId: '  ' })).toEqual({});
+    expect(historyFilters({ accountId: 'a'.repeat(129) })).toEqual({});
+  });
 });

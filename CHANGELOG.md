@@ -2,6 +2,15 @@
 
 ## Sin publicar
 
+- Se añadieron fotos de metas desde galería o cámara, con archivos persistentes y respaldo/restauración local.
+- Se inició la API REST en Cloudflare Workers: health check, perfil Firebase verificado en Neon, OpenAPI y migración PostgreSQL inicial.
+
+- Inicio reorganizado con saludo de Ember, animación de entrada con movimiento reducido, accesos rápidos para gasto/ingreso/cuentas y los tres últimos gastos; registrar desde Inicio abre el tipo elegido.
+- Barra principal con Inicio, Gastos, Cuentas, Metas y Más. Estadísticas queda en Más; la pestaña Cuentas permite abrir el historial filtrado por cuenta.
+- Documentada la decisión de mantener PNG + Reanimated mientras se prepara un prototipo Three.js independiente con modelo 3D y medición en dispositivo.
+- Integrada en Inicio la ilustración original de Ember, preparada con transparencia real y optimizada a 512 × 512 (169 KiB).
+- Progreso inicial de Ember: etapas Chispa → Ember → Flarely según días activos distintos, logros por registrar, revisar estadísticas y planificar, y tarjeta accesible en Inicio. No usa montos ni rachas; logros únicos y locales sobreviven a ediciones y eliminaciones.
+- Migración SQLite 10 para días activos y logros; reconoce registros existentes y añade las tablas de progreso a los respaldos.
 - Añadida exportación y restauración local de respaldo JSON versionado en Ajustes. La restauración valida el esquema, las tablas y los hashes de comprobantes, exige respaldo de seguridad y reemplaza el perfil dentro de una transacción recuperable. El archivo no está cifrado.
 - Porcentajes de presupuestos y metas calculados con enteros para conservar valores exactos como 29 % y 57 %, con pruebas de regresión.
 - Corregida la carga de recordatorios cuando falta `ExpoTopicSubscriptionModule`: comprobación nativa antes de importar Notifications y estado explícito de cliente requerido, conservando preferencias.

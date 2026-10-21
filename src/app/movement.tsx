@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { useServices } from '../application/services';
 import { MovementScreen } from '../modules/movements/presentation/movement-screen';
 export default function Movement(): ReactElement {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, kind } = useLocalSearchParams<{ id?: string; kind?: string }>();
   const { accounts, categories, finance, attachments, attachmentPicker, movementCommitter } =
     useServices();
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function Movement(): ReactElement {
       attachmentPicker={attachmentPicker}
       committer={movementCommitter}
       id={typeof id === 'string' ? id : undefined}
+      initialKind={kind === 'income' ? 'income' : 'expense'}
       onDone={() => {
         if (router.canGoBack()) router.back();
         else router.replace('/(tabs)');

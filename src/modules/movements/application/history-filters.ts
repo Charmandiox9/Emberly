@@ -4,11 +4,13 @@ export interface HistoryFilterInput {
   readonly month?: unknown;
   readonly kind?: unknown;
   readonly categoryId?: unknown;
+  readonly accountId?: unknown;
 }
 export interface HistoryFilters {
   readonly month?: string;
   readonly kind?: MovementKind;
   readonly categoryId?: string;
+  readonly accountId?: string;
 }
 export function historyFilters(input: HistoryFilterInput): HistoryFilters {
   let month: string | undefined;
@@ -27,9 +29,14 @@ export function historyFilters(input: HistoryFilterInput): HistoryFilters {
     input.categoryId.length <= 128
       ? input.categoryId
       : undefined;
+  const accountId =
+    typeof input.accountId === 'string' && input.accountId.trim() && input.accountId.length <= 128
+      ? input.accountId
+      : undefined;
   return {
     ...(month ? { month } : {}),
     ...(kind ? { kind } : {}),
     ...(categoryId ? { categoryId } : {}),
+    ...(accountId ? { accountId } : {}),
   };
 }

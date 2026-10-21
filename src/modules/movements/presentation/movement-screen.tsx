@@ -40,6 +40,7 @@ export interface MovementScreenProps {
   readonly attachmentPicker: AttachmentPicker;
   readonly committer: MovementCommitter;
   readonly id: string | undefined;
+  readonly initialKind: MovementKind;
   readonly onDone: () => void;
   readonly onAccounts: () => void;
   readonly onCategories: () => void;
@@ -56,6 +57,7 @@ interface MovementFormProps {
   readonly attachments: AttachmentService;
   readonly attachmentPicker: AttachmentPicker;
   readonly committer: MovementCommitter;
+  readonly initialKind: MovementKind;
   readonly onDone: () => void;
   readonly onCategories: () => void;
 }
@@ -72,6 +74,7 @@ export function MovementScreen({
   attachmentPicker,
   committer,
   id,
+  initialKind,
   onDone,
   onAccounts,
   onCategories,
@@ -117,6 +120,7 @@ export function MovementScreen({
           attachments={attachments}
           attachmentPicker={attachmentPicker}
           committer={committer}
+          initialKind={initialKind}
           onDone={onDone}
           onCategories={onCategories}
         />
@@ -131,6 +135,7 @@ function MovementForm({
   attachments,
   attachmentPicker,
   committer,
+  initialKind,
   onDone,
   onCategories,
 }: MovementFormProps): ReactElement {
@@ -140,9 +145,9 @@ function MovementForm({
     accountId: data.existing?.accountId ?? data.accounts[0]?.id ?? '',
     categoryId:
       data.existing?.categoryId ??
-      data.categories.find((category) => category.kind === 'expense')?.id ??
+      data.categories.find((category) => category.kind === initialKind)?.id ??
       '',
-    kind: data.existing?.kind ?? 'expense',
+    kind: data.existing?.kind ?? initialKind,
     amount: data.existing ? String(data.existing.amount.amountMinor) : '',
     description: data.existing?.description ?? '',
     date: data.existing?.date ?? businessDateAt(new Date(), 'America/Santiago').value,

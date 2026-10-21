@@ -7,26 +7,32 @@ import { Button } from '../../../shared/ui/button';
 import { MonthPicker } from '../../../shared/ui/month-picker';
 import { ResourceFeedback } from '../../../shared/ui/resource-feedback';
 import { Screen, screenStyles } from '../../../shared/ui/screen';
-import { useTheme } from '../../../shared/ui/theme';
+import { typography, useTheme } from '../../../shared/ui/theme';
 import { useFocusResource } from '../../../shared/ui/use-focus-resource';
 import type { FinanceRepository } from '../../movements';
 import { MovementRow } from '../../movements/presentation';
+import type { MovementKind } from '../../movements/domain/movement';
+import type { EmberRepository } from '../../ember';
+import { EmberProgressCard } from '../../ember/presentation/ember-progress-card';
+import { readSummaryData } from '../application/read-summary';
 
 export interface SummaryScreenProps {
   readonly repository: FinanceRepository;
+  readonly emberRepository: EmberRepository;
   readonly mode: 'home' | 'statistics';
-  readonly onAdd: () => void;
+  readonly onAddKind: (kind: MovementKind) => void;
   readonly onAccounts: () => void;
-  readonly onMore: () => void;
+  readonly onMovements: () => void;
   readonly onEdit: (id: string) => void;
 }
 
 export function SummaryScreen({
   repository,
+  emberRepository,
   mode,
-  onAdd,
+  onAddKind,
   onAccounts,
-  onMore,
+  onMovements,
   onEdit,
 }: SummaryScreenProps): ReactElement {
   const theme = useTheme();
@@ -35,20 +41,19 @@ export function SummaryScreen({
     businessDateAt(new Date(), 'America/Santiago').value.slice(0, 7),
   );
   const read = useCallback(async () => {
-    const [overview, recent] = await Promise.all([
-      repository.overview(month),
-      repository.list({ month, limit: 5 }),
-    ]);
-    return { overview, recent };
-  }, [repository, month]);
+    return readSummaryData(repository, emberRepository, month, mode === 'home');
+  }, [repository, emberRepository, month, mode]);
   const { state, reload } = useFocusResource(read, month);
   return (
-    <Screen title={mode === 'home' ? 'Emberly.' : 'Tu mes en números'}>
-      <MonthPicker value={month} onChange={setMonth} />
+    <Screen title={mode === 'home' ? 'Inicio' : 'Tu mes en números'}>
       {state.status !== 'ready' ? (
         <ResourceFeedback status={state.status} retry={reload} />
       ) : (
         <>
+          {mode === 'home' && state.data.ember ? (
+            <EmberProgressCard progress={state.data.ember} />
+          ) : null}
+          <MonthPicker value={month} onChange={setMonth} />
           {mode === 'home' ? (
             <Animated.View
               entering={FadeInDown.duration(240).reduceMotion(ReduceMotion.System)}
@@ -96,64 +101,28 @@ export function SummaryScreen({
           </View>
           {mode === 'home' ? (
             <>
-              <Button
-                label={
-                  state.data.overview.accounts.some((account) => !account.archived)
-                    ? 'Agregar movimiento'
-                    : 'Crear mi primera cuenta'
-                }
-                onPress={
-                  state.data.overview.accounts.some((account) => !account.archived)
-                    ? onAdd
-                    : onAccounts
-                }
-              />
-              <Pressable
-                accessibilityRole="button"
-                onPress={onMore}
-                style={({ pressed }) => [styles.moreLink, { opacity: pressed ? 0.7 : 1 }]}
-              >
-                <Text style={[screenStyles.caption, { color: theme.primary }]}>
-                  Cuentas, presupuestos y ajustes · Ver más
+              <View style={styles.section}>
+                <Text
+                  accessibilityRole="header"
+                  style={[screenStyles.heading, { color: theme.text }]}
+                >
+                  Acciones rápidas
                 </Text>
-              </Pressable>
-              {state.data.overview.accounts.length > 0 ? (
-                <View style={styles.section}>
-                  <Text
-                    accessibilityRole="header"
-                    style={[screenStyles.heading, { color: theme.text }]}
-                  >
-                    Tus cuentas
-                  </Text>
-                  {state.data.overview.accounts.map((account) => (
-                    <View
-                      key={account.id}
-                      style={[styles.accountRow, { backgroundColor: theme.surface }]}
-                    >
-                      <View style={styles.accountName}>
-                        <Text style={[screenStyles.body, { color: theme.text }]}>
-                          {account.name}
-                        </Text>
-                        {account.archived ? (
-                          <Text style={[screenStyles.caption, { color: theme.secondary }]}>
-                            Archivada
-                          </Text>
-                        ) : null}
-                      </View>
-                      <Amount value={account.balance} />
-                    </View>
-                  ))}
+                <View style={styles.quickActions}>
+                  <QuickAction label="Agregar gasto" onPress={() => onAddKind('expense')} />
+                  <QuickAction label="Agregar ingreso" onPress={() => onAddKind('income')} />
+                  <QuickAction label="Ver cuentas" onPress={onAccounts} />
                 </View>
-              ) : null}
+              </View>
               <Text
                 accessibilityRole="header"
                 style={[screenStyles.heading, { color: theme.text }]}
               >
-                Movimientos recientes
+                Últimos gastos
               </Text>
               {state.data.recent.entries.length === 0 ? (
                 <Text style={[screenStyles.body, { color: theme.secondary }]}>
-                  Aún no hay movimientos en este periodo.
+                  Todavía no hay gastos en este periodo.
                 </Text>
               ) : (
                 state.data.recent.entries.map((movement) => (
@@ -164,6 +133,7 @@ export function SummaryScreen({
                   />
                 ))
               )}
+              <Button label="Ver gastos y movimientos" variant="secondary" onPress={onMovements} />
             </>
           ) : (
             <>
@@ -204,17 +174,43 @@ const styles = StyleSheet.create({
   monthSummary: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18 },
   metric: { flex: 1, gap: 6 },
   divider: { width: 1, height: 42, marginHorizontal: 12 },
-  moreLink: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
   section: { gap: 10 },
-  accountRow: {
-    minHeight: 64,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
+  quickActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  quickAction: {
+    minHeight: 52,
+    flexGrow: 1,
+    flexBasis: '30%',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderRadius: 16,
   },
-  accountName: { flex: 1, gap: 2 },
+  quickActionLabel: {
+    fontFamily: typography.bold,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
 });
+
+interface QuickActionProps {
+  readonly label: string;
+  readonly onPress: () => void;
+}
+
+function QuickAction({ label, onPress }: QuickActionProps): ReactElement {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.quickAction,
+        { backgroundColor: theme.surface, borderColor: theme.border, opacity: pressed ? 0.72 : 1 },
+      ]}
+    >
+      <Text style={[styles.quickActionLabel, { color: theme.text }]}>{label}</Text>
+    </Pressable>
+  );
+}

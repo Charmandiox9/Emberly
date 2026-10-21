@@ -191,6 +191,18 @@
 - Documentación y plan actualizados. Pendiente ejecutar chequeos y export Android; no se agregaron ni ejecutaron pruebas automatizadas en este incremento. Validación en dispositivo físico pendiente.
 - Endurecida la creación del manifiesto: se escribe en un temporal y se mueve antes de iniciar el reemplazo, conservando intactos los datos si la preparación del registro se interrumpe. TypeScript, lint, formato, `git diff --check` y `npm run export:android` aprobados; 2024 módulos y bundle Hermes de 4,6 MB. No se agregaron ni ejecutaron pruebas automatizadas. La restauración real, interrupciones y recuperación requieren aún validación en Android físico.
 
+# 21 de octubre de 2026: pruebas de integridad de restauración
+
+- Añadidas pruebas de integración sobre SQLite real para restaurar comprobantes e identidades, sustituir adjuntos existentes y recuperar el rollback ante un incumplimiento de restricciones de base de datos. La prueba de versión incompatible confirma que los datos actuales se conservan.
+- Actualizados el plan y la guía de respaldos para distinguir verificaciones automatizadas de pruebas Android pendientes.
+- `npm run verify` aprobado: TypeScript, lint, 202 pruebas en 22 archivos y formato. `npm run export:android` aprobado con 2027 módulos y bundle Hermes de 4,7 MB. Vitest dentro del sandbox falló al renombrar temporales de Windows (EPERM); la ejecución con permisos ampliados pasó. La interfaz real de archivos, cortes abruptos y recuperación en dispositivo siguen pendientes.
+
+# 21 de octubre de 2026: progresión local de Ember
+
+- Definidos días activos por fecha UTC, primer registro, primera planificación, primera revisión de Estadísticas y constancia de 3/10 días. No se cuentan montos, ediciones ni eliminaciones; no hay rachas ni penalización por pausas.
+- Añadida migración SQLite 10 con backfill de registros existentes, eventos agregados por día y logros idempotentes. Los logros permanecen ante ediciones/eliminaciones y se incluyen en respaldos. Inicio muestra etapa, días, avance y último logro; Estadísticas registra solo una visita diaria agregada.
+- TypeScript, lint, 214 pruebas en 24 archivos y formato aprobados. Export Android aprobado con 2032 módulos y bundle Hermes de 4,7 MB. La verificación visual en dispositivo, las ilustraciones originales y las celebraciones descartables siguen pendientes. Las primeras pruebas bajo el sandbox fallaron por el EPERM habitual en temporales de Windows; la ejecución autorizada fuera del sandbox pasó.
+
 # 21 de octubre de 2026: formularios e interfaz de inicio
 
 - Montos usan el teclado numérico. Movimientos/transferencias limitan el calendario a hoy o antes; metas mantienen fecha opcional; recordatorios permiten elegir hora en formato 24 h.
@@ -207,3 +219,54 @@
 - Los selectores Material 3 ahora se montan dentro de `<Host matchContents>`, sin una vista nativa intermedia entre Host y el diálogo Compose.
 - Añadida pestaña «Más» para cuentas, categorías, presupuestos y ajustes; se reduce la lista de accesos de Inicio y las transferencias quedan junto a Movimientos. Documentada la organización de pestañas.
 - TypeScript, lint, formato y diff aprobados; 197 pruebas pasaron en 21 archivos y export Android aprobada con 2027 módulos y bundle Hermes de 4,7 MB. Falta confirmar los dos selectores y la pestaña Más en Expo Go.
+
+# 21 de octubre de 2026: primera ilustración integrada de Ember
+
+- Se corrigió el fondo cuadriculado del asset generado y se preparó PNG con transparencia real, reducido a 512 × 512 (169 KiB).
+- La tarjeta de progreso de Inicio ahora presenta a Ember al lado de la etapa y los días activos. El símbolo de marca y las variantes/celebraciones siguen pendientes.
+- `npm run verify`: tipos y lint aprobados; Vitest pasó 214 pruebas en 24 archivos; Prettier aprobado tras ajustar esta entrada. La primera ejecución de Vitest falló por bloqueo EPERM de temporales de Windows; el reintento con permisos ampliados pasó.
+- `npm run export:android`: aprobado con 2033 módulos, asset de Ember de 173 KB y bundle Hermes de 4,7 MB. El primer intento fue bloqueado al escribir temporales Hermes en Windows; el reintento con permisos ampliados pasó.
+
+# 21 de octubre de 2026: inicio de Emberly y navegación
+
+- Inicio ahora da la bienvenida con Ember y una entrada breve, muestra saldo y resumen del mes, accesos rápidos para gasto/ingreso/cuentas y los tres gastos más recientes. Los accesos de registro preseleccionan el tipo correcto.
+- La navegación principal queda en Inicio, Gastos, Metas y Más, siguiendo la referencia original; posteriormente se añadió Cuentas como pestaña principal solicitada por el usuario.
+- Three.js se documentó como opción técnicamente viable con `expo-gl`/React Three Fiber, pero queda para un prototipo aparte cuando exista modelo GLB; la experiencia principal conserva imagen estática accesible como alternativa. Ver ADR 0003.
+- `npm run verify` aprobado: TypeScript, ESLint, 215 pruebas en 24 archivos y Prettier. `git diff --check` aprobado.
+- `npm run export:android` aprobado: 2033 módulos, asset de Ember de 173 KB y bundle Hermes de 4,7 MB.
+- Pendiente: gráficos accesibles en Gastos, sesión/perfil remoto de fase 3B, prototipo Three.js con modelo GLB y validación visual en el teléfono.
+
+# 21 de octubre de 2026: pestaña principal de Cuentas
+
+- Añadida la pestaña Cuentas a la barra inferior; abre la gestión de saldos, edición y archivo/reactivación, con acceso al historial filtrado de cada cuenta.
+- `npm run verify` aprobado con 215 pruebas en 24 archivos; `npm run export:android` aprobado con 2033 módulos y bundle Hermes de 4,7 MB.
+
+# 21 de octubre de 2026: refinamiento de Gastos, Cuentas, Metas y Más
+
+- Gastos: filtros agrupados detrás de un control plegable con contador de filtros activos; las acciones de movimiento, transferencias y categorías usan iconos táctiles con etiquetas accesibles.
+- Cuentas: resumen de saldo conservado, tarjetas más compactas con acciones iconográficas y botón flotante para abrir el formulario en modal.
+- Metas: formulario de alta/edición en modal, acción flotante, suma de objetivos y porcentaje promedio junto al resumen de fondos; cada meta conserva objetivo, asignado, restante/exceso y progreso.
+- Más: perfil local primero, estadísticas, presupuestos y ajustes; se retiraron los accesos redundantes de cuentas y categorías. Google y cerrar sesión se indican como pendientes de autenticación, no se simulan.
+- Validación: TypeScript, lint y 215 pruebas en 24 archivos aprobados. Prettier aprobado. Export Android aprobado con 2034 módulos y bundle Hermes de 4,7 MB. `git diff --check` aprobado.
+- Pendiente para el siguiente ajuste: foto personalizable en metas con almacenamiento persistente y respaldo; requiere extender el modelo/repositorio y restauración de archivos. Validar visualmente en el teléfono las tarjetas, modales, navegación y controles táctiles.
+
+# 21 de octubre de 2026: accesos de Gastos y bienvenida al iniciar
+
+- Los tres accesos de Gastos ahora son tarjetas horizontales más grandes, con icono y etiquetas visibles «Registrar», «Transferir» y «Categorías»; conservan nombres accesibles.
+- Se configuró splash de Emberly con fondo cálido e ilustración. Tras cargar tipografía y base local, una bienvenida animada muestra a Ember y el lema por 1,5 segundos antes del contenido.
+- Validación: TypeScript, ESLint, 215 pruebas y Prettier aprobados; export Android aprobado con 2034 módulos y bundle Hermes de 4,7 MB. El teléfono/Expo Go todavía debe confirmar la visualización real.
+- Nota: Expo Go puede mostrar su propia pantalla blanca mientras inicia el runtime; la configuración de splash se aplica a la app nativa generada, no sustituye esa pantalla del contenedor Expo Go.
+
+# 21 de octubre de 2026: ajuste de ruta Cuentas y revisión del plan
+
+- Expo Router reportaba `accounts` porque el Stack raíz declaraba una pantalla de nivel superior que no existe; Cuentas vive dentro de `(tabs)`. Se retiró ese `Stack.Screen` obsoleto y se conserva la ruta de pestaña `src/app/(tabs)/accounts.tsx`.
+- `npm run verify` aprobado: TypeScript, ESLint, 215 pruebas en 24 archivos y Prettier. `npm run export:android` aprobado con 2034 módulos y bundle Hermes de 4,7 MB; no mostró el aviso de ruta.
+- Pendientes principales del plan: validación física Android/Expo Go y build EAS; fotos de metas; visualización/accesibilidad en dispositivo; API, Google, sincronización, PostgreSQL y R2; push remoto; ilustraciones originales de Ember y Three.js opcional; completar pruebas físicas de respaldo/restauración y preparar/entregar APK beta.
+
+# 21 de octubre de 2026: primera API REST y fotos de metas
+
+- La revisión del plan incorpora la validación funcional reportada por el usuario para navegación, formularios, accesibilidad y persistencia. Se mantienen pendientes el build de desarrollo EAS y las pruebas del nuevo selector de fotos.
+- Se añadió `api/` como Cloudflare Worker/Hono: `GET /health` y `PUT /v1/me`, que valida token Firebase RS256 (emisor/audiencia y antigüedad máxima de 1 hora) y crea/reutiliza un perfil mínimo en Neon. Añadidos OpenAPI, Wrangler, migración PostgreSQL 0001, variables de ejemplo y comandos/scripts. No se configuraron credenciales ni se desplegó.
+- Metas ahora admiten foto desde galería/cámara, copiada a almacenamiento privado con límite 10 MiB y SHA-256. Migración SQLite 11; la foto se ve en la tarjeta, y se incluye/verifica al exportar/restaurar. Se conservan respaldos de esquema 10 con tabla de fotos vacía.
+- `npm run verify`: TypeScript del cliente y Worker, ESLint, 220 pruebas en 25 archivos y Prettier aprobados. `npm run export:android`: aprobado con 2036 módulos y bundle Hermes 4,7 MB. Wrangler dry-run aprobado (295,63 KB; gzip 78,07 KB). `git diff --check` aprobado.
+- Siguiente: configurar Firebase y Neon de desarrollo en `api/.dev.vars`, aplicar la migración SQL y probar `/v1/me`; después implementar el login Google móvil y la API de sincronización de datos/archivos. Falta seleccionar/capturar y restaurar físicamente una foto de meta en Android.

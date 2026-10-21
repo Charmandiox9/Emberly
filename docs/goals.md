@@ -1,6 +1,6 @@
 # Metas y asignaciones de ahorro
 
-La pestaña **Metas** permite crear y editar una meta con nombre, objetivo positivo en CLP y fecha opcional. El nombre admite de 1 a 60 caracteres. Una fecha histórica es válida para conservar metas anteriores; vencer no elimina aportes ni aplica penalizaciones.
+La pestaña **Metas** permite crear y editar una meta con nombre, objetivo positivo en CLP, fecha opcional y una foto JPEG, PNG o WebP de hasta 10 MiB elegida desde la galería o cámara. La imagen se copia al almacenamiento privado y persiste localmente; el respaldo JSON incluye la foto y verifica su SHA-256. El nombre admite de 1 a 60 caracteres. Una fecha histórica es válida para conservar metas anteriores; vencer no elimina aportes ni aplica penalizaciones.
 
 ## Asignar dinero existente
 

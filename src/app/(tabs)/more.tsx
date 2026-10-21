@@ -6,10 +6,9 @@ export default function More(): ReactElement {
   const router = useRouter();
   return (
     <MoreScreen
-      onAccounts={() => router.push('/accounts')}
-      onCategories={() => router.push('/categories')}
       onBudgets={() => router.push('/budgets')}
       onSettings={() => router.push('/settings')}
+      onStatistics={() => router.push('/(tabs)/statistics')}
     />
   );
 }

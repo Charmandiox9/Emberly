@@ -9,6 +9,7 @@ import type {
 import type {
   AllocationPage,
   AllocationQuery,
+  GoalImage,
   GoalEntry,
   GoalRepository,
   GoalsOverview,
@@ -44,6 +45,28 @@ function entry(row: DatabaseRow): GoalEntry {
     createdAt: text(row, 'created_at'),
   });
   const assigned = createMoney(amount(row, 'assigned_minor'));
+  const imageId = row['image_id'];
+  const imageMimeType = row['image_mime_type'];
+  const imageSize = row['image_size_bytes'];
+  const imageHash = row['image_sha256'];
+  let image: GoalImage | null = null;
+  if (imageId !== null && imageId !== undefined) {
+    if (
+      typeof imageId !== 'string' ||
+      !/^[a-f0-9-]{36}$/i.test(imageId) ||
+      (imageMimeType !== 'image/jpeg' &&
+        imageMimeType !== 'image/png' &&
+        imageMimeType !== 'image/webp') ||
+      typeof imageSize !== 'number' ||
+      !Number.isSafeInteger(imageSize) ||
+      imageSize < 1 ||
+      imageSize > 10485760 ||
+      typeof imageHash !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(imageHash)
+    )
+      throw new Error('La foto de una meta no es válida.');
+    image = { id: imageId, mimeType: imageMimeType, sizeBytes: imageSize, sha256: imageHash };
+  }
   if (assigned.amountMinor < 0) throw new Error('Asignación de meta inválida.');
   const delta = goal.target.amountMinor - assigned.amountMinor;
   return {
@@ -56,6 +79,7 @@ function entry(row: DatabaseRow): GoalEntry {
       100,
       Number((BigInt(assigned.amountMinor) * 100n) / BigInt(goal.target.amountMinor)),
     ),
+    image,
   };
 }
 function allocationRow(row: DatabaseRow): GoalAllocation {
@@ -70,7 +94,13 @@ function allocationRow(row: DatabaseRow): GoalAllocation {
   });
 }
 async function overview(database: SqlExecutor): Promise<GoalsOverview> {
-  const goals = (await database.all('SELECT * FROM goals ORDER BY created_at, id')).map(entry);
+  const goals = (
+    await database.all(`
+    SELECT g.*, i.image_id, i.mime_type AS image_mime_type,
+      i.size_bytes AS image_size_bytes, i.sha256 AS image_sha256
+    FROM goals g LEFT JOIN goal_images i ON i.goal_id = g.id ORDER BY g.created_at, g.id
+  `)
+  ).map(entry);
   const balance = sumMoney((await readAccountBalances(database)).map((account) => account.balance));
   const assigned = sumMoney(goals.map((goal) => goal.assigned));
   const backed = Math.max(0, balance.amountMinor);
@@ -113,6 +143,33 @@ export class SqliteGoalRepository implements GoalRepository {
       await transaction.run(
         'UPDATE goals SET name = ?, target_minor = ?, deadline = ? WHERE id = ?',
         [changes.name, changes.target.amountMinor, changes.deadline, id],
+      );
+    });
+  }
+
+  async setImage(goalId: string, image: GoalImage | null): Promise<void> {
+    await this.database.transaction(async (transaction) => {
+      if (!(await transaction.first('SELECT id FROM goals WHERE id = ?', [goalId])))
+        throw new Error('La meta ya no existe.');
+      if (image === null) {
+        await transaction.run('DELETE FROM goal_images WHERE goal_id = ?', [goalId]);
+        return;
+      }
+      if (
+        !/^[a-f0-9-]{36}$/i.test(image.id) ||
+        !['image/jpeg', 'image/png', 'image/webp'].includes(image.mimeType) ||
+        !Number.isSafeInteger(image.sizeBytes) ||
+        image.sizeBytes < 1 ||
+        image.sizeBytes > 10485760 ||
+        !/^[a-f0-9]{64}$/.test(image.sha256)
+      )
+        throw new Error('La foto de la meta no es válida.');
+      await transaction.run(
+        `INSERT INTO goal_images (goal_id, image_id, mime_type, size_bytes, sha256)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT (goal_id) DO UPDATE SET image_id = excluded.image_id,
+           mime_type = excluded.mime_type, size_bytes = excluded.size_bytes, sha256 = excluded.sha256`,
+        [goalId, image.id, image.mimeType, image.sizeBytes, image.sha256],
       );
     });
   }

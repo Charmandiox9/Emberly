@@ -6,6 +6,8 @@ import { categoriesMigrationSql } from './migrations/0006-categories';
 import { budgetsMigrationSql } from './migrations/0007-budgets';
 import { goalsMigrationSql } from './migrations/0008-goals';
 import { remindersMigrationSql } from './migrations/0009-reminders';
+import { emberProgressMigrationSql } from './migrations/0010-ember-progress';
+import { goalImagesMigrationSql } from './migrations/0011-goal-images';
 
 export interface Migration {
   readonly version: number;
@@ -66,6 +68,8 @@ export const migrations: readonly Migration[] = [
   { version: 7, sql: budgetsMigrationSql },
   { version: 8, sql: goalsMigrationSql },
   { version: 9, sql: remindersMigrationSql },
+  { version: 10, sql: emberProgressMigrationSql },
+  { version: 11, sql: goalImagesMigrationSql },
 ];
 
 export const schemaVersion = migrations.at(-1)?.version ?? 0;

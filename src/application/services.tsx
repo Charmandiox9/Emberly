@@ -4,19 +4,20 @@ import { SqliteAccountRepository, type AccountRepository } from '../modules/acco
 import { SqliteFinanceRepository, type FinanceRepository } from '../modules/movements';
 import { createExpoDatabase } from '../shared/storage/expo-database';
 import type { AttachmentService, AttachmentPicker } from '../modules/attachments';
-import { ExpoAttachmentPicker } from '../modules/attachments/native';
+import { ExpoAttachmentFiles, ExpoAttachmentPicker } from '../modules/attachments/native';
 import { createAttachmentService } from './attachment-services';
 import { SqliteMovementCommitter, type MovementCommitter } from './movement-committer';
 import { randomUUID } from 'expo-crypto';
 import { SqliteTransferRepository, type TransferRepository } from '../modules/transfers';
 import { SqliteCategoryRepository, type CategoryRepository } from '../modules/categories';
 import { SqliteBudgetRepository, type BudgetRepository } from '../modules/budgets';
-import { SqliteGoalRepository, type GoalRepository } from '../modules/goals';
+import { GoalImageService, SqliteGoalRepository, type GoalRepository } from '../modules/goals';
 import { SqliteStatisticsRepository, type StatisticsRepository } from '../modules/statistics';
 import { ReminderService, SqliteReminderRepository } from '../modules/reminders';
 import { ExpoReminderDevice } from '../modules/reminders/infrastructure/expo-reminder-device';
 import { SqliteLocalBackupService } from '../modules/backup';
 import { ExpoBackupFiles } from '../modules/backup/infrastructure/expo-backup-files';
+import { SqliteEmberRepository, type EmberRepository } from '../modules/ember';
 
 export interface Services {
   readonly accounts: AccountRepository;
@@ -28,9 +29,11 @@ export interface Services {
   readonly categories: CategoryRepository;
   readonly budgets: BudgetRepository;
   readonly goals: GoalRepository;
+  readonly goalImages: GoalImageService;
   readonly statistics: StatisticsRepository;
   readonly reminders: ReminderService;
   readonly backup: SqliteLocalBackupService;
+  readonly ember: EmberRepository;
 }
 interface ServicesProviderProps {
   readonly children: ReactNode;
@@ -50,6 +53,11 @@ export function ServicesProvider({ children }: ServicesProviderProps): ReactElem
       categories: new SqliteCategoryRepository(database),
       budgets: new SqliteBudgetRepository(database),
       goals: new SqliteGoalRepository(database),
+      goalImages: new GoalImageService(
+        new SqliteGoalRepository(database),
+        new ExpoAttachmentFiles(),
+        randomUUID,
+      ),
       statistics: new SqliteStatisticsRepository(database),
       reminders: new ReminderService(
         new SqliteReminderRepository(database),
@@ -58,6 +66,7 @@ export function ServicesProvider({ children }: ServicesProviderProps): ReactElem
       backup: new SqliteLocalBackupService(database, new ExpoBackupFiles(), () =>
         new Date().toISOString(),
       ),
+      ember: new SqliteEmberRepository(database),
       movementCommitter: new SqliteMovementCommitter(database, {
         nextId: randomUUID,
         now: () => new Date().toISOString(),

@@ -4,10 +4,9 @@ import { Screen, screenStyles } from '../../../shared/ui/screen';
 import { typography, useTheme } from '../../../shared/ui/theme';
 
 export interface MoreScreenProps {
-  readonly onAccounts: () => void;
-  readonly onCategories: () => void;
   readonly onBudgets: () => void;
   readonly onSettings: () => void;
+  readonly onStatistics: () => void;
 }
 
 interface MenuItemProps {
@@ -16,32 +15,35 @@ interface MenuItemProps {
   readonly onPress: () => void;
 }
 
-export function MoreScreen({
-  onAccounts,
-  onCategories,
-  onBudgets,
-  onSettings,
-}: MoreScreenProps): ReactElement {
+export function MoreScreen({ onBudgets, onSettings, onStatistics }: MoreScreenProps): ReactElement {
   const theme = useTheme();
   return (
     <Screen title="Más">
-      <Text style={[screenStyles.body, { color: theme.secondary }]}>
-        Administra tus cuentas y preferencias.
-      </Text>
+      <View style={[styles.profile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
+          <Text style={[styles.avatarText, { color: theme.onPrimary }]}>E</Text>
+        </View>
+        <View style={styles.itemText}>
+          <Text style={[styles.itemTitle, { color: theme.text }]}>Tu perfil Emberly</Text>
+          <Text style={[screenStyles.caption, { color: theme.secondary }]}>
+            Perfil local · sincronización con Google próximamente
+          </Text>
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={[screenStyles.heading, { color: theme.text }]}>
+          Finanzas y progreso
+        </Text>
+        <MenuItem
+          title="Estadísticas detalladas"
+          description="Revisa ingresos, gastos y tendencias por periodo"
+          onPress={onStatistics}
+        />
+      </View>
       <View style={styles.section}>
         <Text accessibilityRole="header" style={[screenStyles.heading, { color: theme.text }]}>
           Organización
         </Text>
-        <MenuItem
-          title="Cuentas"
-          description="Saldos, cuentas activas y archivadas"
-          onPress={onAccounts}
-        />
-        <MenuItem
-          title="Categorías"
-          description="Organiza tus ingresos y gastos"
-          onPress={onCategories}
-        />
         <MenuItem
           title="Presupuestos"
           description="Define límites mensuales por categoría"
@@ -50,13 +52,17 @@ export function MoreScreen({
       </View>
       <View style={styles.section}>
         <Text accessibilityRole="header" style={[screenStyles.heading, { color: theme.text }]}>
-          Preferencias y datos
+          Cuenta y aplicación
         </Text>
         <MenuItem
           title="Ajustes, recordatorios y respaldo"
           description="Configura avisos y protege tus datos locales"
           onPress={onSettings}
         />
+        <Text style={[screenStyles.caption, { color: theme.secondary }]}>
+          El inicio de sesión con Google y el cierre de sesión estarán disponibles al completar la
+          autenticación.
+        </Text>
       </View>
     </Screen>
   );
@@ -86,6 +92,23 @@ function MenuItem({ title, description, onPress }: MenuItemProps): ReactElement 
 }
 
 const styles = StyleSheet.create({
+  profile: {
+    minHeight: 88,
+    padding: 16,
+    borderWidth: 1,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: typography.extraBold, fontSize: 24 },
   section: { gap: 10 },
   item: {
     minHeight: 72,

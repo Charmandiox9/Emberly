@@ -7,6 +7,13 @@ export interface GoalEntry extends Goal {
   readonly excess: Money;
   readonly complete: boolean;
   readonly percentage: number;
+  readonly image: GoalImage | null;
+}
+export interface GoalImage {
+  readonly id: string;
+  readonly mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+  readonly sizeBytes: number;
+  readonly sha256: string;
 }
 export interface GoalFunding {
   readonly balance: Money;
@@ -35,6 +42,7 @@ export interface GoalRepository {
   overview(): Promise<GoalsOverview>;
   save(goal: Goal): Promise<void>;
   update(id: string, changes: GoalChanges): Promise<void>;
+  setImage(goalId: string, image: GoalImage | null): Promise<void>;
   allocate(allocation: GoalAllocation): Promise<void>;
   history(query: AllocationQuery): Promise<AllocationPage>;
 }

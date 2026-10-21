@@ -10,6 +10,7 @@ export default function Movements(): ReactElement {
     month?: string;
     kind?: string;
     categoryId?: string;
+    accountId?: string;
     filterRequestId?: string;
   }>();
   const filters = historyFilters(params);

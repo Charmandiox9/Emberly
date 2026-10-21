@@ -54,10 +54,17 @@ export default function TabLayout(): ReactElement {
       <Tabs.Screen
         name="movements"
         options={{
-          title: 'Movimientos',
+          title: 'Gastos',
           tabBarIcon: ({ color }) => (
             <TabIcon color={color} path="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4" />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="accounts"
+        options={{
+          title: 'Cuentas',
+          tabBarIcon: ({ color }) => <TabIcon color={color} path="M3 6h18v13H3zM3 10h18M7 15h4" />,
         }}
       />
       <Tabs.Screen
@@ -75,10 +82,7 @@ export default function TabLayout(): ReactElement {
       <Tabs.Screen
         name="statistics"
         options={{
-          title: 'Estadísticas',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} path="M4 21V11h4v10m2 0V3h4v18m2 0V7h4v14" />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

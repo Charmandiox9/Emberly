@@ -71,6 +71,19 @@ describe('metas sobre SQLite real', () => {
     expect((await goals.overview()).goals[0]?.percentage).toBe(assigned);
   });
 
+  it('persiste metadatos de la foto de meta sin alterar su progreso', async () => {
+    const image = {
+      id: '00000000-0000-4000-8000-000000000010',
+      mimeType: 'image/jpeg' as const,
+      sizeBytes: 2048,
+      sha256: 'a'.repeat(64),
+    };
+    await goals.setImage(goal.id, image);
+    expect((await goals.overview()).goals[0]?.image).toEqual(image);
+    await goals.setImage(goal.id, null);
+    expect((await goals.overview()).goals[0]?.image).toBeNull();
+  });
+
   it('aporta y retira sin crear ingresos/gastos ni modificar saldos o presupuestos', async () => {
     const before = await finance.overview('2026-10');
     await goals.allocate(allocation);

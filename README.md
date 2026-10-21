@@ -131,6 +131,7 @@ no deben interpretarse como verificaciones ya ejecutadas.
 - [Estadísticas](docs/statistics.md): cálculos, comparación, tendencia, privacidad y navegación al historial filtrado.
 - [Recordatorios](docs/reminders.md): configuración, permisos, recuperación y validación física pendiente. La nueva dependencia requiere regenerar el cliente de desarrollo EAS.
 - [Respaldo local](docs/backup.md): exportación y restauración JSON con comprobantes y confirmación de reemplazo.
+- [API REST](docs/api.md): desarrollo local de Cloudflare Workers, identidad Firebase y Neon.
 
 El almacenamiento actual no está cifrado; no contiene credenciales ni usa servicios
 remotos. El respaldo automático Android está desactivado en la configuración inicial.

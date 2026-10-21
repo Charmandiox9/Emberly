@@ -6,6 +6,11 @@
     "scheme": "emberly",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/ember/ember-companion.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF1E6"
+    },
     "platforms": ["android"],
     "android": {
       "package": "com.charmandiox9.emberly",

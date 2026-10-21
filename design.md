@@ -73,16 +73,17 @@ Comprueba contraste de las combinaciones reales: al menos 4,5:1 en texto normal 
 
 ## Navegación y pantallas
 
-Navegación principal: **Inicio, Movimientos, Metas, Estadísticas y Más**. Las cuatro primeras pestañas contienen las consultas y acciones financieras de uso frecuente. «Más» agrupa cuentas, categorías, presupuestos y ajustes; las transferencias permanecen junto al historial de movimientos. Usa icono y etiqueta para cada destino. Mantén «Agregar movimiento» fácilmente accesible y fuera de las áreas que ocupa el teclado.
+Navegación principal: **Inicio, Gastos, Cuentas, Metas y Más**. La referencia muestra cuatro destinos, pero Cuentas debe estar también en la barra principal por solicitud del usuario. «Gastos» permite ver todos los movimientos y filtrar por tipo, cuenta, categoría y periodo. «Cuentas» tiene una pantalla dedicada con edición y acceso al historial filtrado por cuenta. «Más» agrupa Estadísticas, categorías, presupuestos, perfil cuando haya autenticación y ajustes. Las transferencias permanecen dentro del historial de movimientos. Usa icono y etiqueta para cada destino; mantiene «Agregar gasto» e «Ingreso» al alcance en Inicio.
 
 | Pantalla | Jerarquía y contenido |
 | --- | --- |
-| Inicio | Saludo breve, saldo con periodo explícito, resumen de ingresos/gastos, presupuesto y meta destacada, movimientos recientes |
-| Movimientos | Periodo y filtros, lista agrupada por fecha, concepto/categoría/cuenta y monto; transferencias identificadas |
+| Inicio | Saludo y bienvenida breve de Ember, saldo con periodo explícito, resumen de ingresos/gastos, acciones rápidas para gasto/ingreso/cuentas y los tres últimos gastos |
+| Gastos | Resumen del periodo, acceso al registro, lista con filtros por cuenta/categoría/tipo/fecha, y gráficos accesibles por categoría |
+| Cuentas | Saldo actual y estado por cuenta, edición/archivo, y acceso a movimientos filtrados por cuenta |
 | Registro | Tipo de movimiento, monto, cuenta, categoría y fecha; detalle opcional y acción de guardar visible |
 | Presupuestos | Periodo, límite y gasto por categoría; disponible o exceso explicado con texto |
 | Metas | Nombre, monto objetivo, aportado, restante y progreso; acción para registrar un aporte |
-| Estadísticas | Selector de periodo, ingresos y gastos, categorías y tendencias; acceso a valores en texto |
+| Estadísticas (Más) | Selector de periodo, ingresos y gastos, categorías y tendencias; acceso a valores en texto |
 | Hito | Ember y mensaje breve, logro concreto y acción para continuar; aparición puntual y descartable |
 
 El saldo es el dato principal; Ember ocupa una zona secundaria. Distingue visualmente saldo real y dinero asignado a metas. Las barras de progreso muestran monto y porcentaje. Si hay exceso, explica cuánto se superó aunque la barra visual llegue al 100 %.
@@ -110,13 +111,14 @@ La imagen presenta poses felices, motivadoras, de celebración y descanso. Utili
 | Ember | Hábitos sostenidos | Más expresividad, postura confiada y accesorios propios |
 | Flarely | Hitos de constancia | Silueta más desarrollada y llama más rica; conserva rasgos de familia |
 
-Define umbrales de evolución como reglas de dominio comprobables antes de implementarlos. Recompensa registrar, revisar y planificar; evita premiar únicamente la riqueza o el gasto. No apagues la llama, enfermes al personaje ni retires logros por dificultades económicas o días sin uso. Las celebraciones se pueden omitir.
+Las reglas comprobables, los umbrales y las acciones reconocidas se documentan en [docs/ember-progress.md](docs/ember-progress.md). El progreso no depende de riqueza ni gasto. No apagues la llama, enfermes al personaje ni retires logros por dificultades económicas o días sin uso. Las celebraciones se pueden omitir.
 
 ## Movimiento e interacción
 
 - Feedback de pulsación: 100–150 ms. Transiciones entre estados: 180–250 ms. Celebraciones breves: 400–800 ms, sin bloquear la siguiente acción.
 - Anima preferentemente opacidad y transformaciones. El saldo se muestra correcto desde el principio; evita conteos que retrasen su lectura.
-- Para Ember usa parpadeo, respiración sutil y reacciones puntuales. Evita bucles llamativos en pantallas de consulta y partículas permanentes.
+- En Inicio, Ember hace una entrada breve al abrir la pantalla y puede responder a acciones puntuales. Evita bucles llamativos durante la consulta; toda animación respeta movimiento reducido. La ilustración PNG es la alternativa fiable mientras no haya un modelo 3D.
+- Three.js con `expo-gl` y React Three Fiber puede usarse en React Native, pero requiere un modelo 3D animable. No añadir WebGL al flujo principal hasta prototiparlo con un asset GLB, compilar un development build EAS y verificar fluidez, batería, memoria y alternativa estática en Android físico. Ver [ADR 0003](docs/adr/0003-ember-motion-rendering.md).
 - Respeta movimiento reducido: sustituye desplazamientos y rebotes por cambios inmediatos o fundidos discretos y detén bucles decorativos.
 - La vibración es opcional, breve y nunca la única confirmación de una acción.
 
@@ -133,6 +135,10 @@ Define umbrales de evolución como reglas de dominio comprobables antes de imple
 Revisa en Android físico los temas claro y oscuro, texto ampliado, montos grandes, listas vacías, formularios con error y persistencia tras guardar. Comprueba que el teclado no tape las acciones, que los gráficos permitan leer sus valores y que Ember deje visible la información financiera. Captura las pantallas modificadas cuando haya aplicación ejecutable y registra los dispositivos y estados realmente revisados.
 
 ## Interacciones implementadas
+
+- La tarjeta de progreso en Inicio muestra una ilustración original de Ember junto a la etapa y los días activos. El asset se mantiene transparente y optimizado para pantalla móvil; sus variantes de etapa y celebración quedan pendientes.
+- Inicio presenta saludo animado una sola vez al entrar, saldo y resumen mensual, accesos directos para registrar gasto/ingreso o abrir cuentas, y los tres gastos más recientes. La entrada usa Reanimated y respeta movimiento reducido; no mantiene un bucle decorativo.
+- La barra principal usa Inicio, Gastos, Cuentas, Metas y Más. Estadísticas se abre desde Más; la pestaña Cuentas abre la gestión existente y permite ver movimientos filtrados.
 
 - Los campos de montos CLP usan teclado numérico y los importes se presentan como dígitos sin separadores en el ejemplo del campo. Los saldos iniciales conservan teclado con signo porque aceptan valores negativos.
 - Fechas de movimientos, transferencias y metas se eligen con calendario; el recordatorio usa selector de hora de 24 horas. No se incorpora hora a los movimientos mientras el modelo financiero solo persista una fecha.
