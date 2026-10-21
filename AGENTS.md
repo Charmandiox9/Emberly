@@ -3,6 +3,7 @@
 ## Alcance y contexto
 
 - Estas reglas se aplican a todo el proyecto. Conserva el trabajo existente del usuario y limita cada cambio a la tarea solicitada.
+- Al modificar archivos existentes, aplica cambios puntuales: añade o edita únicamente las líneas necesarias y conserva el contenido que sigue siendo válido. No elimines y vuelvas a insertar líneas sin cambios ni reemplaces un archivo completo para una modificación parcial. Revisa el diff para evitar reescrituras, reordenamientos o cambios de formato ajenos a la tarea.
 - Emberly es una aplicación Android de finanzas personales: cuentas, movimientos, presupuestos, metas y seguimiento de hábitos con la mascota Ember.
 - Base acordada: React Native, Expo y TypeScript estricto. Desarrollo en VS Code, pruebas en teléfono físico y compilaciones Android en la nube con EAS; no exigir Android Studio ni emulador local.
 - Primera versión local y funcional sin conexión. Backend, autenticación y sincronización se incorporan cuando una funcionalidad los requiera.
