@@ -18,14 +18,17 @@ La fase 1 mantiene pendiente su validación física; se avanza en las tareas ind
 - Tema claro y oscuro, accesibilidad y estados de error, vacío y guardado.
 - Ember original con expresiones y celebraciones sencillas; evolución basada en hábitos definidos y comprobables.
 - Exportación y restauración de respaldo para recuperar datos.
+- Comprobantes desde documentos, cámara y galería, conservados localmente hasta confirmar la subida.
+- Google y sincronización persistente con PostgreSQL, tolerando backend inaccesible.
+- Notificaciones locales configurables y push para eventos remotos definidos.
 
 Hipótesis de alcance: español, moneda inicial CLP y una sola moneda por perfil. El modelo guardará el código de moneda, pero las conversiones y las sumas entre distintas monedas quedan fuera de esta entrega. Moneda, zona horaria y plataforma mínima se documentarán al cerrar la fase 1; CLP es una propuesta, no una preferencia confirmada del usuario.
 
-Fuera de esta entrega: conexión bancaria, inversiones, pagos, suscripciones, presupuestos compartidos, OCR, IA, backend y sincronización entre dispositivos. Los movimientos recurrentes y recordatorios se evaluarán después de estabilizar el registro manual. La mascota 3D compleja no es un requisito para validar los primeros flujos.
+Fuera de esta entrega: conexión bancaria, inversiones, pagos, suscripciones, presupuestos compartidos, OCR e IA. Los movimientos recurrentes se evaluarán después de estabilizar el registro manual. La mascota 3D compleja no es un requisito para validar los primeros flujos. La ampliación del 20 de octubre incorpora nube, Google, adjuntos y notificaciones; [docs/offline-sync.md](docs/offline-sync.md) especifica los requisitos y distingue lo existente de lo propuesto.
 
 ## Secuencia y dependencias
 
-Fase 0 completa → 1 base técnica y dominio → 2 sistema visual → 3 cuentas y movimientos → 4 presupuestos y metas → 5 estadísticas y Ember → 6 respaldo y beta Android.
+Fase 0 completa → 1 base técnica y dominio → 2 sistema visual → 3 cuentas y movimientos → 3A cola y comprobantes → 3B Google y sincronización → 4 presupuestos y metas → 5 estadísticas y Ember → 6 respaldo y beta Android.
 
 Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificación de conjunto y recuperación de datos; no concentra toda la calidad al final. Las entregas anteriores a la beta se prueban con información ficticia o prescindible.
 
@@ -79,10 +82,10 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 **Estado:** in_progress. **Depende de:** fase 2.
 
-- [ ] Crear, editar y archivar cuentas; registrar saldo inicial y definir restricciones de archivo/eliminación si hay movimientos.
-- [ ] Administrar categorías de ingreso y gasto conservando referencias de movimientos históricos.
+- [x] Crear, editar y archivar/reactivar cuentas; conservar saldos e historial y bloquear operaciones nuevas en cuentas archivadas. No se expone borrado de cuentas.
+- [x] Administrar categorías de ingreso y gasto: crear, renombrar, archivar/reactivar y conservar referencias de movimientos históricos. Validación física pendiente.
 - [x] Registrar, editar y eliminar ingresos y gastos; validar monto, moneda, cuenta, categoría y fecha.
-- [ ] Registrar y revertir transferencias de manera atómica, impidiendo origen y destino idénticos y su doble conteo en estadísticas.
+- [x] Registrar y anular transferencias atómicas con auditoría, cuentas diferentes y sin doble conteo; historial separado por mes/cuenta y paginación. Validación física pendiente.
 - [x] Mostrar saldos, ingresos/gastos del periodo y movimientos recientes en Inicio; permitir ocultar montos.
 - [x] Implementar historial con filtros de periodo, tipo, categoría y cuenta; prever listas extensas sin cargar innecesariamente todos los registros.
 - [ ] Probar cálculo de saldo, edición, eliminación, fallos de escritura, doble pulsación de guardar y persistencia tras reiniciar.
@@ -91,31 +94,67 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 **Entregable:** primer incremento funcional para controlar dinero con registros manuales.
 
+### Fase 3A: cola persistente y comprobantes locales
+
+**Estado:** in_progress. **Depende de:** reglas de escritura de fase 3.
+
+- [x] Añadir migración 3 con cola persistente, identificadores de operaciones, revisiones locales y marcas de eliminación; conservar datos existentes y saldos. Las versiones remotas se definirán con el protocolo de sincronización.
+- [x] Confirmar cambios de cuentas y movimientos con su operación pendiente en la misma transacción SQLite.
+- [x] Extender seguimiento a transferencias como unidad atómica y mantener orden global entre cuentas, movimientos y transferencias pendientes.
+- [x] Implementar documentos, cámara y galería con copia persistente privada, metadatos SQLite y recuperación de preparaciones interrumpidas. Validación nativa pendiente.
+- [x] Definir límites de cinco archivos de 10 MiB, formatos PDF/JPEG/PNG/WebP, permisos en contexto y manejo de espacio insuficiente; conservar movimientos aunque fallen sus copias.
+- [x] Probar reinicios, rollback, duplicados, fallo de cola y migración desde datos existentes con SQLite real en Node.
+- [x] Probar fallos de archivos, intentos guardados con el movimiento, recuperación y limpieza con SQLite/archivos reales de Node.
+- [ ] Verificar motor Expo, selectores, cámara, compartir, accesibilidad y persistencia en Android físico con cliente nativo actualizado.
+
+**Criterio de salida:** movimiento, comprobante y cola sobreviven al reinicio sin red; un fallo parcial no anuncia un adjunto guardado.
+
+### Fase 3B: Google, PostgreSQL, R2 y sincronización
+
+**Estado:** pending. **Depende de:** fase 3A y configuración de servicios.
+
+- [ ] Confirmados Neon para PostgreSQL, Firebase Auth para Google y R2 para objetos. Workers para API aceptado al continuar con el stack propuesto; verificar cuotas/costes antes de desplegar.
+- [ ] Implementar Google con build EAS de desarrollo, separación de perfiles y vinculación explícita de los datos locales.
+- [ ] Crear API REST autenticada, contratos/OpenAPI, migraciones PostgreSQL, autorización por propietario e idempotencia transaccional.
+- [ ] Sincronizar salida por lotes y descarga por cursor; detectar conflictos y propagar eliminaciones sin sobrescribir cambios locales pendientes.
+- [ ] Añadir disparadores por inicio, primer plano, escritura y recuperación de red; reintentos acotados con retroceso, acción manual y estado visible. Evaluar tareas oportunistas de fondo.
+- [ ] Autorizar subida/descarga privada R2 con URLs temporales, verificar objetos y finalizar metadatos; recuperar fallos y limpiar huérfanos.
+- [ ] Probar respuesta perdida, dos dispositivos, sesión vencida, cuota agotada, aislamiento entre usuarios y subidas parciales.
+- [ ] Documentar despliegue y actualizar `.env.example` con cada variable real, separando configuración pública de secretos del servidor.
+
+**Criterio de salida:** crear/editar/eliminar sin conexión y reconectar no duplica efectos financieros; los adjuntos se recuperan desde R2 y ningún usuario accede a recursos ajenos. La indisponibilidad remota permite seguir usando el perfil local existente.
+
+La fase 3A puede avanzar sin servicios contratados; 3B requiere configurar los proveedores confirmados y definir el alojamiento de la API. Preparar la cola antes de extender los módulos financieros. Las funciones locales independientes pueden continuar mientras se configura la nube.
+
 ### Fase 4: presupuestos y metas
 
-**Estado:** pending. **Depende de:** fase 3.
+**Estado:** in_progress. **Depende de:** fase 3. Presupuestos y metas locales implementados; siguen pendientes validación física y servicios de fase 3B.
 
-- [ ] Crear y editar presupuestos por categoría y mes; calcular gastado, disponible y exceso desde movimientos reales.
-- [ ] Definir y probar cómo se trasladan los límites a otro mes y qué ocurre con categorías archivadas.
-- [ ] Crear metas con nombre, monto objetivo y fecha opcional; mostrar asignado y restante.
-- [ ] Registrar y retirar asignaciones a metas según las reglas de dominio, sin alterar indebidamente el saldo total.
-- [ ] Evitar sobreasignación del dinero disponible entre metas y tratar de forma explícita la falta de fondos posterior a un gasto o edición.
-- [ ] Actualizar presupuestos y metas ante edición/eliminación de datos relacionados y mostrar sus efectos con claridad.
-- [ ] Cubrir con pruebas cruces de mes y zona horaria, excedentes, metas completadas, aportes repetidos y cambios del objetivo.
+- [x] Crear y editar presupuestos por categoría y mes; calcular gastado, disponible y exceso desde movimientos reales. Eliminación confirmada sin borrar movimientos. Validación física pendiente.
+- [x] Definir y probar meses independientes sin arrastre automático; conservar presupuestos de categorías archivadas y permitir corregir sus límites.
+- [x] Crear metas con nombre, monto objetivo y fecha opcional; mostrar asignado, restante y exceso. Validación física pendiente.
+- [x] Registrar y retirar asignaciones a metas según las reglas de dominio, sin alterar el saldo total; historial paginado e idempotencia.
+- [x] Evitar sobreasignación del disponible global; mostrar faltante tras gastos o correcciones sin bloquear la realidad financiera y permitir retirar asignaciones.
+- [x] Actualizar presupuestos ante edición/eliminación o cambio de mes/categoría de movimientos y mostrar disponible/exceso.
+- [x] Actualizar respaldo de metas ante edición/eliminación de movimientos o correcciones de saldo y mostrar sus efectos.
+- [x] Cubrir con pruebas presupuestos en cruces de mes/año, fechas bisiestas, excedentes, metas completadas, aportes repetidos y cambios del objetivo. Presentación en zona Santiago pendiente de validación física.
+- [ ] Verificar en Android los recorridos de presupuestos y metas, incluidos reinicio, modo avión, faltante, doble pulsación y accesibilidad.
 
 **Criterio de salida:** presupuesto y meta se mantienen coherentes con cuentas y movimientos, incluidos sus cambios posteriores. El usuario puede explicar cuánto tiene, cuánto gastó y cuánto asignó sin sumas duplicadas.
 
 **Entregable:** planificación financiera integrada con el registro diario.
 
-### Fase 5: estadísticas y acompañamiento de Ember
+### Fase 5: estadísticas, notificaciones y acompañamiento de Ember
 
-**Estado:** pending. **Depende de:** fase 4.
+**Estado:** in_progress. **Depende de:** fase 4. Estadísticas y recordatorios locales implementados; validación física, push y Ember siguen pendientes.
 
-- [ ] Añadir resúmenes por periodo, gastos por categoría y comparación mensual con valores textuales accesibles.
-- [ ] Garantizar que cada total coincida con el historial filtrado y excluya transferencias y saldos iniciales donde corresponda.
+- [x] Añadir resúmenes por mes, gastos por categoría, comparación en pesos y tendencia de seis meses con valores textuales accesibles. Validación física pendiente.
+- [x] Reconciliar cada total y categoría con todas las páginas del historial filtrado; excluir transferencias, saldos iniciales y asignaciones de metas. Accesos al historial con filtros validados.
 - [ ] Definir eventos y umbrales de hábitos: primer registro, revisiones y constancia; documentar cuándo se concede cada logro.
 - [ ] Implementar expresiones y celebraciones originales de Ember, progresión Chispa → Ember → Flarely y persistencia de logros.
 - [ ] Evitar recompensas duplicadas por reintentos, reapertura o edición de un mismo registro. No penalizar dificultades económicas ni ausencia.
+- [x] Añadir recordatorio diario local configurable, permisos en contexto, canal privado y contenido genérico; reconciliación persistente sin duplicar programaciones. Build nativo actualizado y validación física pendientes.
+- [ ] Añadir push Expo/FCM para eventos remotos definidos, con tokens por usuario/dispositivo y prueba de recepción/apertura en Android físico.
 - [ ] Aplicar movimiento reducido y permitir omitir celebraciones. Revisar rendimiento con historial amplio y assets optimizados.
 
 **Criterio de salida:** estadísticas reconciliadas con movimientos y progresión comprobable e idempotente; la mascota no bloquea acciones financieras. El rendimiento se revisa en el dispositivo disponible y queda registrado.
@@ -129,6 +168,7 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 - [ ] Exportar respaldo JSON versionado con todas las entidades y relaciones necesarias; explicar que contiene información financiera y si está cifrado.
 - [ ] Restaurar con validación previa, detección de referencias inválidas y operación transaccional. Para la primera versión usar restauración por reemplazo confirmado y respaldo previo; la fusión se deja fuera de alcance.
 - [ ] Probar exportar → restaurar en una instalación limpia y comparar saldos, movimientos, presupuestos, metas y logros.
+- [ ] Incluir comprobantes en el respaldo y definir restauración de identidad, identificadores y cola sin duplicar datos remotos.
 - [ ] Probar archivos corruptos, versiones incompatibles e interrupciones sin destruir los datos actuales.
 - [ ] Ejecutar el recorrido completo: primer uso, carga manual, planificación, estadísticas, cierre/reapertura, modo avión y recuperación.
 - [ ] Revisar accesibilidad, temas, teclado, listas extensas, privacidad de logs y permisos; documentar resultados y límites de lo probado.
@@ -137,7 +177,7 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 
 **Criterio de salida:** APK instalado en Android físico, flujos críticos y respaldo/restauración verificados, sin fallos críticos de integridad pendientes y documentación reproducible. Preparar el AAB de producción cuando corresponda; publicar en Google Play es una tarea posterior con requisitos propios.
 
-**Entregable:** beta local utilizable con datos reales y mecanismo de recuperación.
+**Entregable:** beta utilizable sin conexión, con sincronización cuando el servicio esté disponible y recuperación local/remota verificada.
 
 ## Verificación y cierre de cada incremento
 
@@ -159,9 +199,9 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 | Asset original de Ember pendiente               | Crear versión sencilla en fase 2 y mejorarla sin bloquear el control financiero                                      |
 | Acceso al teléfono o pruebas manuales pendiente | Solicitar la intervención concreta al llegar a esa verificación; no marcarla completada por una previsualización web |
 
-## Extensión posterior: nube y nuevas funciones
+## Ampliación de alcance: nube y nuevas funciones
 
-Se planificará al validar la beta: cuentas de usuario, respaldo remoto y sincronización, movimientos recurrentes, recordatorios y otras mejoras priorizadas por uso. Para nube, definir resolución de conflictos, escrituras idempotentes y aislamiento entre usuarios; elegir REST/GraphQL por necesidad y utilizar Prisma únicamente en backend con migraciones versionadas. No forma parte de la implementación inicial.
+Google, PostgreSQL, sincronización, comprobantes y notificaciones se incorporan por solicitud del usuario el 20 de octubre de 2026. Las fases 3A y 3B siguen pendientes; Neon, Firebase Auth, R2 y Workers quedan como stack elegido al continuar; no se han provisionado servicios. La sincronización no reemplaza los respaldos ni garantiza disponibilidad remota ilimitada en planes gratuitos.
 
 ## Incidencias y estado de validación
 

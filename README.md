@@ -5,15 +5,16 @@ React Native + Expo SDK 57, TypeScript estricto y persistencia local SQLite.
 
 ## Estado actual
 
-Segundo incremento: cuentas CLP, registro/edición/eliminación de ingresos y gastos,
-historial filtrable con paginación, saldos actuales y resumen mensual por categoría.
-Inicio, Movimientos y Estadísticas tienen navegación por pestañas; cuentas y formulario
-se abren como pantallas independientes. Transferencias, presupuestos, metas, categorías
-personalizadas, edición/archivo de cuentas y la mascota siguen pendientes.
+La versión local incluye cuentas CLP, registro/edición/eliminación de ingresos y gastos,
+historial filtrable con paginación, saldos actuales, comparación mensual y tendencia de seis meses con gastos por categoría.
+Inicio, Movimientos, Metas y Estadísticas tienen navegación por pestañas; cuentas y formulario
+se abren como pantallas independientes. También incluye transferencias con anulación,
+edición/archivo de cuentas, categorías personalizadas, presupuestos mensuales y metas con aportes/retiros.
+Incluye recordatorios diarios locales configurables. Autenticación Google, sincronización remota, push y la mascota siguen pendientes.
 
 Inicio muestra el **saldo actual** calculado desde saldos iniciales y movimientos.
 El selector mensual filtra flujos e historial, sin convertirlo en saldo histórico.
-Cuentas identifica sus valores como saldos iniciales. No se cargan movimientos ficticios.
+Cuentas distingue saldo inicial y saldo actual. No se cargan movimientos ficticios.
 Usa datos de prueba hasta que exista respaldo/restauración.
 
 ## Entorno y ejecución
@@ -104,6 +105,14 @@ no deben interpretarse como verificaciones ya ejecutadas.
 - `src/modules/accounts/`: dominio, caso de uso, repositorio SQLite y presentación de cuentas.
 - `src/modules/movements/`: registro, validación de borradores, historial y repositorio financiero.
 - `src/modules/dashboard/`: saldos actuales y flujos mensuales.
+- `src/modules/sync/`: consulta de cambios pendientes persistidos por la migración SQLite 3; todavía sin envío remoto.
+- `src/modules/attachments/`: comprobantes persistentes desde documentos, cámara y galería, con reintentos y limpieza.
+- `src/modules/transfers/`: transferencias entre cuentas, anulación e historial paginado.
+- `src/modules/categories/`: creación, cambio de nombre y archivo/reactivación de categorías.
+- `src/modules/budgets/`: límites mensuales por categoría, gasto real, disponible y exceso.
+- `src/modules/goals/`: metas, asignaciones, respaldo disponible y auditoría de aportes/retiros.
+- `src/modules/statistics/`: resúmenes mensuales, comparación, distribución por categoría y tendencia reconciliada con historial.
+- `src/modules/reminders/`: preferencia local, permisos, programación y recuperación de recordatorios diarios.
 - `src/application/`: composición de repositorios para las rutas.
 - `src/shared/domain/`: dinero y fechas independientes del framework.
 - `src/shared/storage/`: contratos, adaptador Expo y migraciones versionadas.
@@ -111,6 +120,15 @@ no deben interpretarse como verificaciones ya ejecutadas.
 - `tests/`: pruebas unitarias y de integración.
 - [Reglas de dominio](docs/domain.md), [arquitectura](docs/adr/0001-local-first-expo.md),
   [diseño](design.md), [plan](task_plan.md), [progreso](progress.md) y [cambios](CHANGELOG.md).
+- [Cola transaccional](docs/adr/0002-durable-outbox.md), [sincronización prevista](docs/offline-sync.md)
+  y [configuración de servicios y variables](docs/environment-setup.md).
+- [Comprobantes: uso, recuperación y pruebas Android](docs/attachments.md). Los nuevos módulos nativos requieren regenerar el cliente de desarrollo EAS.
+- [Gestión de cuentas y transferencias](docs/finance-operations.md): edición, archivo/reactivación, saldos, anulación y sincronización prevista.
+- [Gestión de categorías](docs/categories.md): tipos, historial, archivo/reactivación y recorrido de prueba.
+- [Presupuestos mensuales](docs/budgets.md): límites, meses independientes, exceso y recorrido de prueba.
+- [Metas y asignaciones](docs/goals.md): aportes/retiros, disponible global, faltantes y recorrido de prueba.
+- [Estadísticas](docs/statistics.md): cálculos, comparación, tendencia, privacidad y navegación al historial filtrado.
+- [Recordatorios](docs/reminders.md): configuración, permisos, recuperación y validación física pendiente. La nueva dependencia requiere regenerar el cliente de desarrollo EAS.
 
 El almacenamiento actual no está cifrado; no contiene credenciales ni usa servicios
 remotos. El respaldo automático Android está desactivado en la configuración inicial.
