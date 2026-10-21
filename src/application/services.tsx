@@ -15,6 +15,8 @@ import { SqliteGoalRepository, type GoalRepository } from '../modules/goals';
 import { SqliteStatisticsRepository, type StatisticsRepository } from '../modules/statistics';
 import { ReminderService, SqliteReminderRepository } from '../modules/reminders';
 import { ExpoReminderDevice } from '../modules/reminders/infrastructure/expo-reminder-device';
+import { SqliteLocalBackupService } from '../modules/backup';
+import { ExpoBackupFiles } from '../modules/backup/infrastructure/expo-backup-files';
 
 export interface Services {
   readonly accounts: AccountRepository;
@@ -28,6 +30,7 @@ export interface Services {
   readonly goals: GoalRepository;
   readonly statistics: StatisticsRepository;
   readonly reminders: ReminderService;
+  readonly backup: SqliteLocalBackupService;
 }
 interface ServicesProviderProps {
   readonly children: ReactNode;
@@ -51,6 +54,9 @@ export function ServicesProvider({ children }: ServicesProviderProps): ReactElem
       reminders: new ReminderService(
         new SqliteReminderRepository(database),
         new ExpoReminderDevice(),
+      ),
+      backup: new SqliteLocalBackupService(database, new ExpoBackupFiles(), () =>
+        new Date().toISOString(),
       ),
       movementCommitter: new SqliteMovementCommitter(database, {
         nextId: randomUUID,

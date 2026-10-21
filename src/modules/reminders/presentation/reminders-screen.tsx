@@ -19,6 +19,7 @@ import {
 
 interface RemindersScreenProps {
   readonly service: ReminderService;
+  readonly children?: ReactElement;
 }
 interface ReminderFormProps extends RemindersScreenProps {
   readonly initial: ReminderState;
@@ -31,7 +32,7 @@ const choices: readonly ChoiceOption<'on' | 'off'>[] = [
   { value: 'off', label: 'Desactivado' },
   { value: 'on', label: 'Activado' },
 ];
-export function RemindersScreen({ service }: RemindersScreenProps): ReactElement {
+export function RemindersScreen({ service, children }: RemindersScreenProps): ReactElement {
   const read = useCallback(() => service.read(), [service]);
   const { state, reload } = useFocusResource(read, 'reminders');
   return (
@@ -41,6 +42,7 @@ export function RemindersScreen({ service }: RemindersScreenProps): ReactElement
       ) : (
         <ReminderForm service={service} initial={state.data} />
       )}
+      {children}
     </Screen>
   );
 }

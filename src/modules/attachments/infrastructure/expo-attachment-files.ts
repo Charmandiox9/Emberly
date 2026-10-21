@@ -30,6 +30,89 @@ async function inspectFile(file: File): Promise<AttachmentFileInfo> {
 }
 
 export class ExpoAttachmentFiles implements AttachmentFiles {
+  async verifyBackupRestoreFile(id: string, data: string, expectedSha256: string): Promise<void> {
+    validateAttachmentId(id);
+    const directory = new Directory(Paths.document, 'attachment-restore');
+    directory.create({ intermediates: true, idempotent: true });
+    const staged = new File(directory, `${id}.new`);
+    if (staged.exists) staged.delete();
+    void staged.create({ intermediates: true, overwrite: true });
+    staged.write(data, { encoding: 'base64' });
+    try {
+      const info = await inspectFile(staged);
+      if (info.sha256 !== expectedSha256)
+        throw new AttachmentError('Un comprobante no coincide con la huella del respaldo.');
+    } catch (error: unknown) {
+      if (staged.exists) staged.delete();
+      throw error;
+    }
+  }
+
+  async verifyStagedBackupRestoreFile(id: string, expectedSha256: string): Promise<boolean> {
+    const staged = new File(Paths.document, 'attachment-restore', `${id}.new`);
+    if (!staged.exists) return false;
+    return (await inspectFile(staged)).sha256 === expectedSha256;
+  }
+
+  async moveStagedBackupRestoreFile(id: string): Promise<void> {
+    validateAttachmentId(id);
+    const staged = new File(Paths.document, 'attachment-restore', `${id}.new`);
+    const destination = storedFile(id);
+    if (!staged.exists) throw new AttachmentError('Falta un archivo preparado para restaurar.');
+    if (destination.exists) await destination.delete();
+    await new Directory(Paths.document, 'attachments').create({
+      intermediates: true,
+      idempotent: true,
+    });
+    await staged.move(destination);
+  }
+
+  async moveBackupRestoreFileToRollback(id: string): Promise<void> {
+    validateAttachmentId(id);
+    const source = storedFile(id);
+    if (!source.exists) return;
+    const directory = new Directory(Paths.document, 'attachment-restore');
+    await directory.create({ intermediates: true, idempotent: true });
+    const rollback = new File(directory, `${id}.old`);
+    if (rollback.exists) await rollback.delete();
+    await source.move(rollback);
+  }
+
+  async restoreBackupRollbackFile(id: string): Promise<void> {
+    validateAttachmentId(id);
+    const rollback = new File(Paths.document, 'attachment-restore', `${id}.old`);
+    const destination = storedFile(id);
+    if (!rollback.exists) return;
+    if (destination.exists) await destination.delete();
+    await new Directory(Paths.document, 'attachments').create({
+      intermediates: true,
+      idempotent: true,
+    });
+    await rollback.move(destination);
+  }
+
+  async removeBackupRestoreFiles(id: string): Promise<void> {
+    validateAttachmentId(id);
+    for (const suffix of ['.new', '.old']) {
+      const file = new File(Paths.document, 'attachment-restore', `${id}${suffix}`);
+      if (file.exists) await file.delete();
+    }
+  }
+
+  async removeStoredAttachment(id: string): Promise<void> {
+    const file = storedFile(id);
+    if (file.exists) await file.delete();
+  }
+
+  async readBackupFile(id: string, expectedSha256: string): Promise<string> {
+    const file = storedFile(id);
+    if (!file.exists) throw new AttachmentError('Falta un comprobante; el respaldo se canceló.');
+    const info = await inspectFile(file);
+    if (info.sha256 !== expectedSha256)
+      throw new AttachmentError('Un comprobante cambió; el respaldo se canceló.');
+    return file.base64();
+  }
+
   async copy(sourceUri: string, id: string): Promise<AttachmentFileInfo> {
     const source = new File(sourceUri);
     const size = source.size;

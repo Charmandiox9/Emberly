@@ -15,6 +15,7 @@ import { ServicesProvider } from '../application/services';
 import { createAttachmentService } from '../application/attachment-services';
 import { PrivacyProvider } from '../shared/ui/amount';
 import { ReminderLifecycle } from '../application/reminder-lifecycle';
+import { ExpoBackupFiles } from '../modules/backup/infrastructure/expo-backup-files';
 
 import { createExpoDatabase } from '../shared/storage/expo-database';
 import { migrateDatabase } from '../shared/storage/migrations';
@@ -24,6 +25,14 @@ import { useTheme } from '../shared/ui/theme';
 async function initializeDatabase(database: SQLiteDatabase): Promise<void> {
   const adapter = createExpoDatabase(database);
   await migrateDatabase(adapter);
+  const attachments = await adapter.all("SELECT id, sha256 FROM attachments WHERE state = 'ready'");
+  await new ExpoBackupFiles().recoverAttachments(
+    attachments.map((row) => {
+      if (typeof row['id'] !== 'string' || typeof row['sha256'] !== 'string')
+        throw new Error('Los comprobantes guardados no son válidos.');
+      return { id: row['id'], sha256: row['sha256'] };
+    }),
+  );
   await createAttachmentService(adapter).recover();
 }
 
