@@ -17,6 +17,7 @@ import type {
 } from '../application/finance-repository';
 import type { MovementKind } from '../domain/movement';
 import { MovementRow } from './movement-row';
+import type { HistoryFilters } from '../application/history-filters';
 
 type KindFilter = MovementKind | 'all';
 const kinds: readonly ChoiceOption<KindFilter>[] = [
@@ -28,22 +29,28 @@ export interface HistoryScreenProps {
   readonly repository: FinanceRepository;
   readonly accounts: AccountRepository;
   readonly onAdd: () => void;
+  readonly onTransfers: () => void;
+  readonly onCategories: () => void;
   readonly onEdit: (id: string) => void;
+  readonly initialFilters?: HistoryFilters;
 }
 
 export function HistoryScreen({
   repository,
   accounts,
   onAdd,
+  onTransfers,
+  onCategories,
   onEdit,
+  initialFilters,
 }: HistoryScreenProps): ReactElement {
   const theme = useTheme();
-  const [month, setMonth] = useState(() =>
-    businessDateAt(new Date(), 'America/Santiago').value.slice(0, 7),
+  const [month, setMonth] = useState(
+    () => initialFilters?.month ?? businessDateAt(new Date(), 'America/Santiago').value.slice(0, 7),
   );
-  const [kind, setKind] = useState<KindFilter>('all');
+  const [kind, setKind] = useState<KindFilter>(initialFilters?.kind ?? 'all');
   const [accountId, setAccountId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [categoryId, setCategoryId] = useState(initialFilters?.categoryId ?? '');
   const [cursors, setCursors] = useState<readonly MovementCursor[]>([]);
   const cursor = cursors.at(-1);
   const query = useMemo(
@@ -85,6 +92,8 @@ export function HistoryScreen({
         }}
       />
       <Button label="Agregar movimiento" onPress={onAdd} disabled={accountOptions.length === 0} />
+      <Button label="Ver y registrar transferencias" variant="secondary" onPress={onTransfers} />
+      <Button label="Administrar categorías" variant="secondary" onPress={onCategories} />
       <ChoiceGroup<KindFilter>
         label="Tipo"
         options={kinds}

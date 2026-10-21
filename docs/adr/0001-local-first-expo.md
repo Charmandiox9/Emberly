@@ -27,7 +27,7 @@ Reanimated, Worklets y las demás dependencias nativas se fijan según la matriz
 ## Alternativas y consecuencias
 
 - Flutter requeriría Dart y otro flujo de herramientas; combinarlo con TS dentro de la app incrementaría mantenimiento sin una necesidad actual.
-- Un backend desde el inicio añadiría autenticación, despliegues y sincronización antes de validar el registro local; se pospone.
+- Un backend desde el inicio añadiría autenticación, despliegues y sincronización antes de validar el registro local; se pospuso en la primera implementación. La ampliación posterior solicitada por el usuario incorpora Google, PostgreSQL, adjuntos y notificaciones al plan manteniendo SQLite como base local; ver [persistencia y sincronización](../offline-sync.md).
 - Prisma no se ejecuta en el móvil. Su adopción futura en backend no reemplazará las migraciones SQLite.
 - SQLite de Node y Expo pueden diferir en versión. Las pruebas en Android son necesarias, especialmente al cambiar APIs o SQL.
 - React DOM se declara con la versión de React compatible con Expo para evitar que los peers transitivos de Router instalen otra versión; no implica que web sea plataforma de entrega.

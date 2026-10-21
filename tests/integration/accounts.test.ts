@@ -67,13 +67,16 @@ describe('cuentas y migraciones sobre SQLite real', () => {
   it('revierte escrituras relacionadas si una operación falla', async () => {
     await expect(
       database.transaction(async (transaction) => {
-        await transaction.run('INSERT INTO accounts VALUES (?, ?, ?, ?, ?)', [
-          sample.id,
-          sample.name,
-          sample.initialBalance.amountMinor,
-          sample.initialBalance.currency,
-          sample.createdAt,
-        ]);
+        await transaction.run(
+          'INSERT INTO accounts (id, name, initial_balance_minor, currency, created_at) VALUES (?, ?, ?, ?, ?)',
+          [
+            sample.id,
+            sample.name,
+            sample.initialBalance.amountMinor,
+            sample.initialBalance.currency,
+            sample.createdAt,
+          ],
+        );
         throw new Error('Interrupción simulada');
       }),
     ).rejects.toThrow('Interrupción simulada');
@@ -87,13 +90,10 @@ describe('cuentas y migraciones sobre SQLite real', () => {
   });
 
   it('valida filas persistidas antes de entregarlas al dominio', async () => {
-    await database.run('INSERT INTO accounts VALUES (?, ?, ?, ?, ?)', [
-      sample.id,
-      sample.name,
-      1000,
-      'CLP',
-      'invalid-date',
-    ]);
+    await database.run(
+      'INSERT INTO accounts (id, name, initial_balance_minor, currency, created_at) VALUES (?, ?, ?, ?, ?)',
+      [sample.id, sample.name, 1000, 'CLP', 'invalid-date'],
+    );
     await expect(new SqliteAccountRepository(database).list()).rejects.toThrow();
   });
 });

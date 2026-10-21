@@ -1,4 +1,11 @@
 import type { Database, SqlExecutor } from './database';
+import { outboxMigrationSql } from './migrations/0003-outbox';
+import { attachmentsMigrationSql } from './migrations/0004-attachments';
+import { transfersMigrationSql } from './migrations/0005-transfers';
+import { categoriesMigrationSql } from './migrations/0006-categories';
+import { budgetsMigrationSql } from './migrations/0007-budgets';
+import { goalsMigrationSql } from './migrations/0008-goals';
+import { remindersMigrationSql } from './migrations/0009-reminders';
 
 export interface Migration {
   readonly version: number;
@@ -52,6 +59,13 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX movements_account_date ON movements(account_id, business_date);
     `,
   },
+  { version: 3, sql: outboxMigrationSql },
+  { version: 4, sql: attachmentsMigrationSql },
+  { version: 5, sql: transfersMigrationSql },
+  { version: 6, sql: categoriesMigrationSql },
+  { version: 7, sql: budgetsMigrationSql },
+  { version: 8, sql: goalsMigrationSql },
+  { version: 9, sql: remindersMigrationSql },
 ];
 
 export const schemaVersion = migrations.at(-1)?.version ?? 0;

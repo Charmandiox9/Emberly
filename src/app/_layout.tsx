@@ -12,7 +12,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Toaster } from 'sonner-native';
 import { ServicesProvider } from '../application/services';
+import { createAttachmentService } from '../application/attachment-services';
 import { PrivacyProvider } from '../shared/ui/amount';
+import { ReminderLifecycle } from '../application/reminder-lifecycle';
 
 import { createExpoDatabase } from '../shared/storage/expo-database';
 import { migrateDatabase } from '../shared/storage/migrations';
@@ -20,7 +22,9 @@ import { Button } from '../shared/ui/button';
 import { useTheme } from '../shared/ui/theme';
 
 async function initializeDatabase(database: SQLiteDatabase): Promise<void> {
-  await migrateDatabase(createExpoDatabase(database));
+  const adapter = createExpoDatabase(database);
+  await migrateDatabase(adapter);
+  await createAttachmentService(adapter).recover();
 }
 
 function LoadingScreen(): ReactElement {
@@ -86,6 +90,51 @@ export default function RootLayout(): ReactElement {
                 >
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen
+                    name="settings"
+                    options={{
+                      headerShown: true,
+                      title: 'Ajustes',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
+                    name="goal-activity"
+                    options={{
+                      headerShown: true,
+                      title: 'Aportes y retiros',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
+                    name="budgets"
+                    options={{
+                      headerShown: true,
+                      title: 'Presupuestos',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
+                    name="categories"
+                    options={{
+                      headerShown: true,
+                      title: 'Categorías',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
+                    name="transfers"
+                    options={{
+                      headerShown: true,
+                      title: 'Transferencias',
+                      headerTintColor: theme.text,
+                      headerStyle: { backgroundColor: theme.background },
+                    }}
+                  />
+                  <Stack.Screen
                     name="accounts"
                     options={{
                       headerShown: true,
@@ -104,6 +153,7 @@ export default function RootLayout(): ReactElement {
                     }}
                   />
                 </Stack>
+                <ReminderLifecycle />
               </PrivacyProvider>
             </ServicesProvider>
           </SQLiteProvider>

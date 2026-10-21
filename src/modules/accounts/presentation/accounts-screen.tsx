@@ -1,331 +1,221 @@
 import { randomUUID } from 'expo-crypto';
-import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { formatMoney, parseMoney, type Money } from '../../../shared/domain/money';
+import { useCallback, useRef, useState, type ReactElement } from 'react';
+import { Alert, Text, View } from 'react-native';
+import { businessDateAt } from '../../../shared/domain/business-date';
+import { parseMoney, type Money } from '../../../shared/domain/money';
+import { Amount, usePrivacy } from '../../../shared/ui/amount';
 import { Button } from '../../../shared/ui/button';
-import { usePrivacy } from '../../../shared/ui/amount';
+import { Field } from '../../../shared/ui/field';
 import { notifications } from '../../../shared/ui/notifications';
-import { typography, useTheme } from '../../../shared/ui/theme';
-import {
-  getInitialBalanceTotal,
-  openAccount,
-  type Account,
-  type AccountRepository,
-} from '../index';
+import { ResourceFeedback } from '../../../shared/ui/resource-feedback';
+import { Screen, screenStyles } from '../../../shared/ui/screen';
+import { useTheme } from '../../../shared/ui/theme';
+import { useFocusResource } from '../../../shared/ui/use-focus-resource';
+import type { FinanceRepository } from '../../movements';
+import { openAccount, type AccountRepository, type ManagedAccount } from '../index';
 
 export interface AccountsScreenProps {
   readonly repository: AccountRepository;
+  readonly finance: FinanceRepository;
 }
 
-type LoadState = 'loading' | 'ready' | 'error';
-
-export function AccountsScreen({ repository }: AccountsScreenProps): ReactElement {
+export function AccountsScreen({ repository, finance }: AccountsScreenProps): ReactElement {
   const theme = useTheme();
-  const [accounts, setAccounts] = useState<readonly Account[]>([]);
-  const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [loadError, setLoadError] = useState('');
+  const { hidden, toggle } = usePrivacy();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newId, setNewId] = useState(randomUUID);
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('0');
-  const [formError, setFormError] = useState('');
-  const [nameError, setNameError] = useState('');
-  const [balanceError, setBalanceError] = useState('');
+  const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const { hidden, toggle } = usePrivacy();
-  const savingLock = useRef(false);
+  const lock = useRef(false);
+  const read = useCallback(async () => {
+    const [accounts, overview] = await Promise.all([
+      repository.listManaged(),
+      finance.overview(businessDateAt(new Date(), 'America/Santiago').value.slice(0, 7)),
+    ]);
+    return { accounts, overview };
+  }, [repository, finance]);
+  const { state, reload } = useFocusResource(read, 'accounts');
 
-  const readAccounts = useCallback(async (): Promise<readonly Account[]> => {
-    const stored = await repository.list();
-    getInitialBalanceTotal(stored);
-    return stored;
-  }, [repository]);
-
-  const applyAccounts = useCallback((stored: readonly Account[]): void => {
-    setAccounts(stored);
-    setLoadError('');
-    setLoadState('ready');
-  }, []);
-
-  const markLoadFailed = useCallback((): void => {
-    setLoadError('No pudimos leer tus cuentas. Reintenta para consultar tus datos.');
-    setLoadState('error');
-  }, []);
-
-  async function load(): Promise<void> {
-    setLoadState('loading');
-    try {
-      applyAccounts(await readAccounts());
-    } catch {
-      markLoadFailed();
-    }
+  function clear(): void {
+    setEditingId(null);
+    setName('');
+    setBalance('0');
+    setError('');
   }
-
-  useEffect(() => {
-    let active = true;
-    void readAccounts().then(
-      (stored) => {
-        if (active) applyAccounts(stored);
-      },
-      () => {
-        if (active) markLoadFailed();
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [readAccounts, applyAccounts, markLoadFailed]);
-
   async function save(): Promise<void> {
-    if (savingLock.current || loadState !== 'ready') return;
-    savingLock.current = true;
+    if (lock.current) return;
+    lock.current = true;
     setSaving(true);
-    setFormError('');
-    setNameError('');
-    setBalanceError('');
+    setError('');
     try {
       if (!name.trim() || name.trim().length > 60) {
-        setNameError('Escribe un nombre de entre 1 y 60 caracteres.');
+        setError('Escribe un nombre de entre 1 y 60 caracteres.');
         return;
       }
       let initialBalance: Money;
       try {
         initialBalance = parseMoney(balance);
-        getInitialBalanceTotal(accounts, initialBalance);
       } catch {
-        setBalanceError(
-          'Ingresa un monto entero válido, por ejemplo 25.000, dentro del rango seguro.',
-        );
+        setError('Ingresa un saldo inicial entero válido, por ejemplo 25.000 o -5.000.');
         return;
       }
-      await openAccount(repository, {
-        id: randomUUID(),
-        name,
-        initialBalance,
-        createdAt: new Date().toISOString(),
-      });
-      setName('');
-      setBalance('0');
-      notifications.success('Cuenta guardada en este dispositivo');
-      setLoadState('loading');
-      await load();
+      if (editingId) await repository.update(editingId, { name, initialBalance });
+      else
+        await openAccount(repository, {
+          id: newId,
+          name,
+          initialBalance,
+          createdAt: new Date().toISOString(),
+        });
+      notifications.success(editingId ? 'Cuenta actualizada' : 'Cuenta guardada');
+      clear();
+      setNewId(randomUUID());
+      reload();
     } catch {
-      setFormError(
-        'No pudimos guardar la cuenta. Tus datos ingresados siguen aquí para reintentar.',
+      setError(
+        'No pudimos guardar la cuenta. Revisa los valores y reintenta; tus datos siguen en el formulario.',
       );
     } finally {
-      savingLock.current = false;
+      lock.current = false;
       setSaving(false);
     }
   }
-
-  const total = getInitialBalanceTotal(accounts);
-  const fieldStyle = [
-    styles.input,
-    { color: theme.text, borderColor: theme.border, backgroundColor: theme.raised },
-  ];
-
+  async function archive(account: ManagedAccount): Promise<void> {
+    if (lock.current) return;
+    lock.current = true;
+    setSaving(true);
+    setError('');
+    try {
+      await repository.setArchived(account.id, !account.archived);
+      reload();
+      notifications.success(account.archived ? 'Cuenta reactivada' : 'Cuenta archivada');
+    } catch {
+      setError('No pudimos cambiar el estado de la cuenta. Reintenta.');
+    } finally {
+      lock.current = false;
+      setSaving(false);
+    }
+  }
+  function confirmArchive(account: ManagedAccount): void {
+    if (account.archived) {
+      void archive(account);
+      return;
+    }
+    Alert.alert(
+      'Archivar cuenta',
+      'Conservará su historial y su saldo seguirá en el total. No podrás usarla en operaciones nuevas hasta reactivarla.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Archivar',
+          onPress: () => {
+            void archive(account);
+          },
+        },
+      ],
+    );
+  }
+  const editor = (
+    <View style={screenStyles.section}>
+      <Text accessibilityRole="header" style={[screenStyles.heading, { color: theme.text }]}>
+        {editingId ? 'Editar cuenta' : 'Agregar cuenta'}
+      </Text>
+      <Text style={[screenStyles.body, { color: theme.secondary }]}>
+        {editingId
+          ? 'Cambiar el saldo inicial corrige el punto de partida y modifica el saldo actual. No registra un ingreso ni un gasto.'
+          : 'Agrega un banco, una billetera o efectivo. El saldo inicial puede ser negativo y no cuenta como ingreso.'}
+      </Text>
+      <Field
+        label="Nombre de la cuenta"
+        value={name}
+        onChangeText={setName}
+        maxLength={60}
+        editable={!saving}
+      />
+      <Field
+        label="Saldo inicial en pesos chilenos"
+        value={balance}
+        onChangeText={setBalance}
+        keyboardType="numbers-and-punctuation"
+        maxLength={24}
+        editable={!saving}
+      />
+      {error ? (
+        <Text accessibilityRole="alert" style={[screenStyles.body, { color: theme.danger }]}>
+          {error}
+        </Text>
+      ) : null}
+      <Button
+        label={saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Guardar cuenta'}
+        disabled={saving}
+        onPress={() => {
+          void save();
+        }}
+      />
+      {editingId ? (
+        <Button label="Cancelar edición" variant="secondary" disabled={saving} onPress={clear} />
+      ) : null}
+    </View>
+  );
   return (
-    <SafeAreaView style={[styles.page, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView
-        style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <Text style={[styles.wordmark, { color: theme.text }]}>
-              Emberly<Text style={{ color: theme.primary }}>.</Text>
+    <Screen title="Tus cuentas">
+      {state.status !== 'ready' ? (
+        <ResourceFeedback status={state.status} retry={reload} />
+      ) : (
+        <>
+          <View style={[screenStyles.card, { backgroundColor: theme.surface }]}>
+            <Text style={[screenStyles.heading, { color: theme.text }]}>
+              Saldo actual total · CLP
             </Text>
-            <Text style={[styles.caption, { color: theme.secondary }]}>
-              Pequeños hábitos, grandes fuegos.
+            <Amount value={state.data.overview.balance} large />
+            <Text style={[screenStyles.body, { color: theme.secondary }]}>
+              Incluye los saldos de las cuentas archivadas.
             </Text>
-          </View>
-          <View style={[styles.summary, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.eyebrow, { color: theme.secondary }]}>
-              TU PUNTO DE PARTIDA · CLP
-            </Text>
-            {loadState === 'loading' ? (
-              <ActivityIndicator accessibilityLabel="Cargando cuentas" color={theme.primary} />
-            ) : loadState === 'error' ? (
-              <>
-                <Text accessibilityRole="alert" style={[styles.body, { color: theme.danger }]}>
-                  {loadError}
-                </Text>
-                <Button
-                  label="Volver a cargar"
-                  onPress={() => {
-                    setLoadState('loading');
-                    void load();
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={[styles.amount, { color: theme.text }]}>
-                  {hidden ? '••••••' : formatMoney(total)}
-                </Text>
-                <Text style={[styles.body, { color: theme.secondary }]}>
-                  {accounts.length === 0
-                    ? 'Cada plan empieza por saber dónde estás.'
-                    : 'Saldo inicial total de tus cuentas.'}
-                </Text>
-                <Button label={hidden ? 'Mostrar montos' : 'Ocultar montos'} onPress={toggle} />
-              </>
-            )}
-          </View>
-          {accounts.length > 0 && loadState === 'ready' ? (
-            <View style={styles.section}>
-              <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
-                Saldos iniciales por cuenta
-              </Text>
-              {accounts.map((account) => (
-                <View key={account.id} style={[styles.account, { backgroundColor: theme.surface }]}>
-                  <Text style={[styles.accountName, { color: theme.text }]}>{account.name}</Text>
-                  <Text style={[styles.accountAmount, { color: theme.text }]}>
-                    {hidden ? '••••••' : formatMoney(account.initialBalance)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          <View style={styles.section}>
-            <View style={styles.intro}>
-              <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
-                {accounts.length === 0 ? 'Tu primera cuenta' : 'Agregar una cuenta'}
-              </Text>
-              <Text style={[styles.body, { color: theme.secondary }]}>
-                Puede ser tu banco, una billetera o efectivo. El saldo inicial no cuenta como
-                ingreso.
-              </Text>
-            </View>
-            <View style={styles.field}>
-              <Text nativeID="account-name-label" style={[styles.label, { color: theme.text }]}>
-                Nombre de la cuenta
-              </Text>
-              <TextInput
-                accessibilityLabel="Nombre de la cuenta"
-                accessibilityLabelledBy="account-name-label"
-                style={fieldStyle}
-                value={name}
-                onChangeText={setName}
-                placeholder="Por ejemplo, Mi banco"
-                placeholderTextColor={theme.secondary}
-                maxLength={60}
-                editable={!saving}
-                autoCapitalize="sentences"
-              />
-              {nameError ? (
-                <Text
-                  accessibilityRole="alert"
-                  accessibilityLiveRegion="polite"
-                  style={[styles.body, { color: theme.danger }]}
-                >
-                  {nameError}
-                </Text>
-              ) : null}
-            </View>
-            <View style={styles.field}>
-              <Text nativeID="balance-label" style={[styles.label, { color: theme.text }]}>
-                Saldo inicial en pesos chilenos
-              </Text>
-              <TextInput
-                accessibilityLabel="Saldo inicial en pesos chilenos"
-                accessibilityLabelledBy="balance-label"
-                style={fieldStyle}
-                value={balance}
-                onChangeText={setBalance}
-                keyboardType="numbers-and-punctuation"
-                placeholder="25.000"
-                placeholderTextColor={theme.secondary}
-                editable={!saving}
-                selectTextOnFocus
-                maxLength={24}
-              />
-              <Text style={[styles.caption, { color: theme.secondary }]}>
-                Sin decimales. Si tienes deuda, puedes usar un monto negativo.
-              </Text>
-              {balanceError ? (
-                <Text
-                  accessibilityRole="alert"
-                  accessibilityLiveRegion="polite"
-                  style={[styles.body, { color: theme.danger }]}
-                >
-                  {balanceError}
-                </Text>
-              ) : null}
-            </View>
-            {formError ? (
-              <Text
-                accessibilityRole="alert"
-                accessibilityLiveRegion="polite"
-                style={[styles.body, { color: theme.danger }]}
-              >
-                {formError}
-              </Text>
-            ) : null}
             <Button
-              label={saving ? 'Guardando…' : 'Guardar cuenta'}
-              disabled={saving || loadState !== 'ready'}
-              onPress={() => {
-                void save();
-              }}
+              variant="secondary"
+              label={hidden ? 'Mostrar montos' : 'Ocultar montos'}
+              onPress={toggle}
             />
           </View>
-          <Text style={[styles.caption, { color: theme.secondary }]}>
-            Tus datos se guardan aquí y funcionan sin conexión. Esta versión inicial aún no tiene
-            respaldo; úsala con datos de prueba.
-          </Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          {state.data.accounts.map((account) => (
+            <View key={account.id} style={[screenStyles.card, { backgroundColor: theme.surface }]}>
+              <Text style={[screenStyles.heading, { color: theme.text }]}>{account.name}</Text>
+              <Text style={[screenStyles.caption, { color: theme.secondary }]}>
+                {account.archived ? 'Archivada' : 'Activa'} · Saldo inicial
+              </Text>
+              <Amount value={account.initialBalance} />
+              <Text style={[screenStyles.caption, { color: theme.secondary }]}>Saldo actual</Text>
+              <Amount
+                value={
+                  state.data.overview.accounts.find((entry) => entry.id === account.id)?.balance ??
+                  account.initialBalance
+                }
+              />
+              <Button
+                variant="secondary"
+                label={`Editar: ${account.name}`}
+                disabled={saving}
+                onPress={() => {
+                  setEditingId(account.id);
+                  setName(account.name);
+                  setBalance(String(account.initialBalance.amountMinor));
+                  setError('');
+                }}
+              />
+              <Button
+                variant="secondary"
+                label={`${account.archived ? 'Reactivar' : 'Archivar'}: ${account.name}`}
+                disabled={saving}
+                onPress={() => confirmArchive(account)}
+              />
+              {editingId === account.id ? editor : null}
+            </View>
+          ))}
+          {!editingId ? editor : null}
+        </>
+      )}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  page: { flex: 1 },
-  fill: { flex: 1 },
-  content: { padding: 20, gap: 32, paddingBottom: 40 },
-  header: { gap: 4, paddingTop: 16 },
-  wordmark: { fontFamily: typography.extraBold, fontSize: 32, lineHeight: 40 },
-  summary: { borderRadius: 20, padding: 24, gap: 16 },
-  eyebrow: { fontFamily: typography.bold, fontSize: 12, lineHeight: 20, letterSpacing: 1 },
-  amount: {
-    fontFamily: typography.extraBold,
-    fontSize: 32,
-    lineHeight: 40,
-    fontVariant: ['tabular-nums'],
-  },
-  section: { gap: 16 },
-  intro: { gap: 8 },
-  sectionTitle: { fontFamily: typography.bold, fontSize: 24, lineHeight: 32 },
-  body: { fontFamily: typography.regular, fontSize: 16, lineHeight: 24 },
-  caption: { fontFamily: typography.regular, fontSize: 14, lineHeight: 20 },
-  field: { gap: 8 },
-  label: { fontFamily: typography.semibold, fontSize: 16, lineHeight: 24 },
-  input: {
-    minHeight: 52,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    fontFamily: typography.regular,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  account: { borderRadius: 12, padding: 16, gap: 8 },
-  accountName: { fontFamily: typography.semibold, fontSize: 16, lineHeight: 24 },
-  accountAmount: {
-    fontFamily: typography.bold,
-    fontSize: 20,
-    lineHeight: 28,
-    fontVariant: ['tabular-nums'],
-  },
-});

@@ -12,7 +12,7 @@
 ## Cuenta: implementado
 
 Una cuenta tiene identificador, nombre de 1 a 60 caracteres, saldo inicial y fecha de
-creación. Puede representar banco, efectivo o una billetera. El saldo inicial puede
+creación. La gestión añade estado activa/archivada y edición de nombre/saldo inicial. Puede representar banco, efectivo o una billetera. El saldo inicial puede
 ser negativo para representar una deuda; no se registra como ingreso o gasto.
 
 El identificador es único. Un segundo intento con el mismo ID falla sin modificar
@@ -39,24 +39,40 @@ a Money, evitando conversiones JS imprecisas. Un error de agregado revierte la e
 La FK compuesta categoría/tipo impide usar categorías de ingreso en gastos o viceversa.
 El historial filtra mes, tipo, cuenta y categoría; pagina por fecha e ID descendentes.
 
-## Transferencias: especificado, pendiente
+## Categorías: implementado localmente
 
-Las transferencias tendrán dos lados relacionados y se guardarán/revertirán en una
-transacción. No entrarán en totales de ingresos/gastos. Archivar una cuenta preservará
-su historial. Los detalles de edición y eliminación se resolverán con esos casos de uso.
+Las categorías tienen identificador estable, nombre y tipo ingreso/gasto inmutable. Se pueden crear, renombrar, archivar y reactivar, incluidas las iniciales. El archivo conserva referencias y totales; bloquea registros nuevos y permite corregir movimientos históricos manteniendo su categoría original. Los cambios de nombre actualizan las etiquetas del historial. Ver [gestión y pruebas](categories.md).
 
-## Presupuestos y metas: especificado, pendiente
+## Transferencias: implementado localmente
+
+Un registro indivisible contiene origen, destino y monto; de él se derivan dos lados opuestos sobre los saldos. Guardar/anular confirma ambos efectos y la operación pendiente en una transacción. No entra en ingresos/gastos; anular conserva auditoría y es idempotente. Archivar una cuenta conserva su historial y saldo, bloqueando operaciones nuevas hasta reactivarla. Ver [reglas y recorrido](finance-operations.md).
+
+## Presupuestos: implementado localmente
 
 - Presupuestos mensuales por categoría; comparar gasto efectivo dentro del periodo local.
 - Cada nuevo mes tendrá un límite explícito; no arrastrar sobrantes automáticamente sin una regla documentada.
+- Límite positivo y único por categoría de gasto y mes. Cambiar o quitar un límite no altera movimientos ni saldos; el gasto puede superarlo y se muestra el exceso.
+- Categorías archivadas conservan sus presupuestos y admiten correcciones del límite; no se les crean nuevos hasta reactivarlas. El gasto se deriva de movimientos al consultar. Ver [reglas y pruebas](budgets.md).
+
+## Metas: implementado localmente
+
 - Las metas asignan dinero existente, sin crear gasto o ingreso adicional. Un retiro de asignación libera disponibilidad, no crea ingreso.
 - Antes de un aporte, comprobar que el dinero disponible no esté asignado a otras metas. Si un gasto posterior reduce el respaldo, mostrar el déficit y pedir ajuste, conservando la realidad del movimiento.
-- Una edición de monto objetivo no elimina aportes históricos. Un exceso sobre la meta se muestra como tal; las políticas de reasignación se implementarán con la fase 4.
+- Una edición de monto objetivo conserva aportes históricos. Si lo asignado supera el objetivo, se muestra el exceso; los retiros liberan la asignación sin crear ingresos.
+- Los aportes se limitan al disponible global y al restante del objetivo. Los retiros no superan lo asignado. Completar es un estado derivado, reversible al retirar o aumentar el objetivo; no implica respaldo garantizado si el saldo bajó.
+- El respaldo es el saldo neto no negativo; con saldo negativo, todas las asignaciones carecen de respaldo y la deuda sigue visible en el saldo. Asignaciones globales por perfil, sin vinculación a movimientos/cuentas individuales. Ver [reglas y pruebas](goals.md).
+
+## Estadísticas: implementado localmente
+
+Los ingresos/gastos mensuales y por categoría se calculan desde movimientos y fecha de negocio. El resultado resta gasto a ingreso, sin saldos iniciales, transferencias o asignaciones. La comparación usa variaciones en pesos frente al mes anterior y la tendencia abarca hasta seis meses, con ceros explícitos para meses sin registros. Cada total tiene acceso al historial filtrado y pruebas de reconciliación. Ver [estadísticas y límites](statistics.md).
+
+## Recordatorios: implementado localmente
+
+Preferencia de dispositivo desactivada por defecto, horario local y revisión persistente. La intención se guarda antes de programar; los estados diferencian programado, desactivado, permiso/canal bloqueados y pendiente. No pertenece al modelo financiero ni a su cola de sincronización. Ver [uso, recuperación y pruebas nativas pendientes](reminders.md).
 
 ## Persistencia y cambios de esquema
 
-SQLite guarda cuentas, categorías y movimientos en esquema versión 2. La actualización
-desde versión 1 conserva las cuentas y crea las categorías una sola vez.
+SQLite está en esquema versión 9: cuentas y movimientos (1/2), cola durable (3), comprobantes (4), archivo de cuentas y transferencias con orden global de operaciones (5), archivo y gestión de categorías (6), presupuestos (7), metas y asignaciones con eventos de sincronización (8), preferencias locales de recordatorios (9). Las actualizaciones conservan registros e identificadores de operaciones pendientes.
 `PRAGMA user_version` registra la versión;
 las migraciones y su versión se aplican dentro de una transacción con conexión propia
 y `BEGIN IMMEDIATE` en Expo. Se activan las claves foráneas antes de iniciar cada

@@ -11,6 +11,7 @@ import {
   migrateDatabase,
   migrations,
   readSchemaVersion,
+  schemaVersion,
 } from '../../src/shared/storage/migrations';
 import { openTestDatabase, type TestDatabase } from '../helpers/node-database';
 
@@ -222,7 +223,7 @@ it('actualiza desde esquema 1 conservando cuentas y creando categorías una sola
     });
     await migrateDatabase(database);
     await migrateDatabase(database);
-    expect(await readSchemaVersion(database)).toBe(2);
+    expect(await readSchemaVersion(database)).toBe(schemaVersion);
     const repository = new SqliteFinanceRepository(database);
     expect((await repository.categories()).length).toBe(9);
     expect((await repository.overview('2026-10')).balance.amountMinor).toBe(40000);

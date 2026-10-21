@@ -60,6 +60,18 @@ export default function TabLayout(): ReactElement {
         }}
       />
       <Tabs.Screen
+        name="goals"
+        options={{
+          title: 'Metas',
+          tabBarIcon: ({ color }) => (
+            <TabIcon
+              color={color}
+              path="M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5M12 12l9-9m-5 0h5v5"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="statistics"
         options={{
           title: 'Estadísticas',

@@ -9,9 +9,30 @@
     "platforms": ["android"],
     "android": {
       "package": "com.charmandiox9.emberly",
-      "allowBackup": false
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ]
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-font"],
-    "experiments": { "typedRoutes": true }
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font",
+      "expo-sharing",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Permite que Emberly use la cámara para fotografiar comprobantes.",
+          "photosPermission": "Permite seleccionar fotos para adjuntarlas a tus movimientos.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

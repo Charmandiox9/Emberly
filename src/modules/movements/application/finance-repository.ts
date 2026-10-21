@@ -29,6 +29,7 @@ export interface AccountBalance {
   readonly id: string;
   readonly name: string;
   readonly balance: Money;
+  readonly archived: boolean;
 }
 
 export interface CategoryTotal {

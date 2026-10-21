@@ -12,3 +12,5 @@ export type {
   MovementCursor,
 } from './application/finance-repository';
 export { SqliteFinanceRepository } from './infrastructure/sqlite-finance-repository';
+export { historyFilters } from './application/history-filters';
+export type { HistoryFilters, HistoryFilterInput } from './application/history-filters';

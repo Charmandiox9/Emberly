@@ -7,6 +7,14 @@ export interface Account {
   readonly createdAt: string;
 }
 
+export interface ManagedAccount extends Account {
+  readonly archived: boolean;
+}
+export interface AccountChanges {
+  readonly name: string;
+  readonly initialBalance: Money;
+}
+
 export interface CreateAccountInput {
   readonly id: string;
   readonly name: string;

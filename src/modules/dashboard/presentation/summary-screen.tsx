@@ -16,6 +16,9 @@ export interface SummaryScreenProps {
   readonly mode: 'home' | 'statistics';
   readonly onAdd: () => void;
   readonly onAccounts: () => void;
+  readonly onTransfers: () => void;
+  readonly onBudgets: () => void;
+  readonly onSettings: () => void;
   readonly onEdit: (id: string) => void;
 }
 
@@ -24,6 +27,9 @@ export function SummaryScreen({
   mode,
   onAdd,
   onAccounts,
+  onTransfers,
+  onBudgets,
+  onSettings,
   onEdit,
 }: SummaryScreenProps): ReactElement {
   const theme = useTheme();
@@ -79,8 +85,15 @@ export function SummaryScreen({
               <Button
                 label="Agregar movimiento"
                 onPress={onAdd}
-                disabled={state.data.overview.accounts.length === 0}
+                disabled={!state.data.overview.accounts.some((account) => !account.archived)}
               />
+              <Button
+                label="Transferencias entre cuentas"
+                variant="secondary"
+                onPress={onTransfers}
+              />
+              <Button label="Planificar presupuestos" variant="secondary" onPress={onBudgets} />
+              <Button label="Ajustes de recordatorios" variant="secondary" onPress={onSettings} />
               <Button
                 label={
                   state.data.overview.accounts.length === 0
@@ -95,7 +108,10 @@ export function SummaryScreen({
                   key={account.id}
                   style={[screenStyles.card, { backgroundColor: theme.surface }]}
                 >
-                  <Text style={[screenStyles.heading, { color: theme.text }]}>{account.name}</Text>
+                  <Text style={[screenStyles.heading, { color: theme.text }]}>
+                    {account.name}
+                    {account.archived ? ' (archivada)' : ''}
+                  </Text>
                   <Amount value={account.balance} />
                 </View>
               ))}

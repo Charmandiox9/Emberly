@@ -1,7 +1,8 @@
 import { randomUUID } from 'expo-crypto';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 import { Alert, Text } from 'react-native';
-import type { Account, AccountRepository } from '../../accounts';
+import type { ManagedAccount, AccountRepository } from '../../accounts';
+import type { ManagedCategory, CategoryRepository } from '../../categories';
 import { businessDateAt } from '../../../shared/domain/business-date';
 import { Button } from '../../../shared/ui/button';
 import { ChoiceGroup, type ChoiceOption } from '../../../shared/ui/choice-group';
@@ -11,31 +12,51 @@ import { ResourceFeedback } from '../../../shared/ui/resource-feedback';
 import { Screen, screenStyles } from '../../../shared/ui/screen';
 import { useTheme } from '../../../shared/ui/theme';
 import { useFocusResource } from '../../../shared/ui/use-focus-resource';
-import { recordMovement } from '../application/record-movement';
+import { saveMovementWithProofs } from '../../../application/save-movement-with-proofs';
 import {
   validateMovementDraft,
   type MovementDraft,
   type MovementErrors,
 } from '../application/movement-draft';
 import type { FinanceRepository, MovementEntry } from '../application/finance-repository';
-import type { Category, MovementKind } from '../domain/movement';
+import type { MovementKind } from '../domain/movement';
+import type {
+  Attachment,
+  AttachmentService,
+  AttachmentPicker,
+  AttachmentOrigin,
+  AttachmentSource,
+} from '../../attachments';
+import { AttachmentPanel } from '../../attachments/presentation';
+import { attachmentErrorMessage } from '../../attachments';
+import type { MovementCommitter } from '../../../application/movement-committer';
 
 export interface MovementScreenProps {
   readonly repository: FinanceRepository;
   readonly accounts: AccountRepository;
+  readonly categories: CategoryRepository;
+  readonly attachments: AttachmentService;
+  readonly attachmentPicker: AttachmentPicker;
+  readonly committer: MovementCommitter;
   readonly id: string | undefined;
   readonly onDone: () => void;
   readonly onAccounts: () => void;
+  readonly onCategories: () => void;
 }
 interface FormData {
-  readonly accounts: readonly Account[];
-  readonly categories: readonly Category[];
+  readonly accounts: readonly ManagedAccount[];
+  readonly categories: readonly ManagedCategory[];
   readonly existing: MovementEntry | null;
+  readonly attachments: readonly Attachment[];
 }
 interface MovementFormProps {
   readonly data: FormData;
   readonly repository: FinanceRepository;
+  readonly attachments: AttachmentService;
+  readonly attachmentPicker: AttachmentPicker;
+  readonly committer: MovementCommitter;
   readonly onDone: () => void;
+  readonly onCategories: () => void;
 }
 const kinds: readonly ChoiceOption<MovementKind>[] = [
   { value: 'expense', label: 'Gasto' },
@@ -45,20 +66,35 @@ const kinds: readonly ChoiceOption<MovementKind>[] = [
 export function MovementScreen({
   repository,
   accounts,
+  categories: categoryRepository,
+  attachments,
+  attachmentPicker,
+  committer,
   id,
   onDone,
   onAccounts,
+  onCategories,
 }: MovementScreenProps): ReactElement {
   const theme = useTheme();
   const read = useCallback(async (): Promise<FormData> => {
-    const [options, categories, existing] = await Promise.all([
-      accounts.list(),
-      repository.categories(),
+    const [options, categories, existing, proofs] = await Promise.all([
+      accounts.listManaged(),
+      categoryRepository.list(),
       id ? repository.get(id) : Promise.resolve(null),
+      id ? attachments.list(id) : Promise.resolve([]),
     ]);
     if (id && !existing) throw new Error('El movimiento no existe.');
-    return { accounts: options, categories, existing };
-  }, [repository, accounts, id]);
+    return {
+      accounts: options.filter(
+        (account) => !account.archived || account.id === existing?.accountId,
+      ),
+      categories: categories.filter(
+        (category) => !category.archived || category.id === existing?.categoryId,
+      ),
+      existing,
+      attachments: proofs,
+    };
+  }, [repository, accounts, categoryRepository, attachments, id]);
   const { state, reload } = useFocusResource(read, id ?? 'new');
   return (
     <Screen title={id ? 'Editar movimiento' : 'Registrar movimiento'}>
@@ -67,18 +103,36 @@ export function MovementScreen({
       ) : state.data.accounts.length === 0 ? (
         <>
           <Text style={[screenStyles.body, { color: theme.secondary }]}>
-            Primero agrega una cuenta para saber dónde entra y sale tu dinero.
+            Necesitas una cuenta activa para registrar movimientos. Puedes crear una o reactivar una
+            cuenta archivada.
           </Text>
           <Button label="Crear una cuenta" onPress={onAccounts} />
         </>
       ) : (
-        <MovementForm key={id ?? 'new'} data={state.data} repository={repository} onDone={onDone} />
+        <MovementForm
+          key={id ?? 'new'}
+          data={state.data}
+          repository={repository}
+          attachments={attachments}
+          attachmentPicker={attachmentPicker}
+          committer={committer}
+          onDone={onDone}
+          onCategories={onCategories}
+        />
       )}
     </Screen>
   );
 }
 
-function MovementForm({ data, repository, onDone }: MovementFormProps): ReactElement {
+function MovementForm({
+  data,
+  repository,
+  attachments,
+  attachmentPicker,
+  committer,
+  onDone,
+  onCategories,
+}: MovementFormProps): ReactElement {
   const theme = useTheme();
   const [id] = useState(() => data.existing?.id ?? randomUUID());
   const [draft, setDraft] = useState<MovementDraft>(() => ({
@@ -95,6 +149,9 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
   const [errors, setErrors] = useState<MovementErrors>({});
   const [saving, setSaving] = useState(false);
   const lock = useRef(false);
+  const [persisted, setPersisted] = useState(data.existing !== null);
+  const [proofs, setProofs] = useState(data.attachments);
+  const [selected, setSelected] = useState<readonly AttachmentSource[]>([]);
 
   async function save(): Promise<void> {
     if (lock.current) return;
@@ -112,7 +169,29 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
     setSaving(true);
     setErrors({});
     try {
-      await recordMovement(repository, result.movement, today, data.existing !== null);
+      const saved = await saveMovementWithProofs(committer, attachments, {
+        movement: result.movement,
+        today,
+        updating: persisted,
+        selected,
+      });
+      setPersisted(true);
+      setSelected([]);
+      if (saved.proofStatus !== 'unavailable') setProofs(saved.attachments);
+      if (saved.proofStatus === 'incomplete') {
+        setErrors({
+          general:
+            'El movimiento quedó guardado. Algunos comprobantes no se copiaron; reintenta abajo o vuelve a seleccionarlos. Puedes salir y revisarlos después.',
+        });
+        return;
+      }
+      if (saved.proofStatus === 'unavailable') {
+        setErrors({
+          general:
+            'El movimiento quedó guardado, pero no pudimos consultar sus comprobantes. Abre de nuevo el movimiento para revisarlos.',
+        });
+        return;
+      }
     } catch {
       setErrors({
         general:
@@ -125,6 +204,56 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
     }
     notifications.success(data.existing ? 'Movimiento actualizado' : 'Movimiento guardado');
     onDone();
+  }
+
+  async function attachmentAction(work: () => Promise<void>): Promise<void> {
+    if (lock.current) return;
+    lock.current = true;
+    setSaving(true);
+    try {
+      await work();
+      setProofs(await attachments.list(id));
+      setErrors({});
+    } catch (error: unknown) {
+      setErrors({
+        general: `${attachmentErrorMessage(error)} ${persisted ? 'El movimiento guardado se conserva.' : 'Tus datos siguen en el formulario.'}`,
+      });
+      try {
+        setProofs(await attachments.list(id));
+      } catch {
+        /* Preserve the last list; the error remains visible. */
+      }
+    } finally {
+      lock.current = false;
+      setSaving(false);
+    }
+  }
+
+  function selectProof(origin: AttachmentOrigin): void {
+    void attachmentAction(async () => {
+      const source = await attachmentPicker.select(origin);
+      if (source)
+        setSelected((current) =>
+          current.some((entry) => entry.uri === source.uri) ? current : [...current, source],
+        );
+    });
+  }
+
+  function removeProof(attachment: Attachment): void {
+    Alert.alert(
+      'Quitar comprobante',
+      'Se eliminará la copia guardada en Emberly. El movimiento conservará su monto y sus datos.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Quitar',
+          style: 'destructive',
+          onPress: () => {
+            void attachmentAction(() => attachments.remove(attachment.id));
+          },
+        },
+      ],
+    );
   }
 
   async function remove(): Promise<void> {
@@ -143,6 +272,12 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
       setSaving(false);
     }
     notifications.success('Movimiento eliminado');
+    // Financial deletion is already durable; file cleanup can be retried on startup.
+    try {
+      await attachments.recover();
+    } catch {
+      /* The durable cleanup job is retained. */
+    }
     onDone();
   }
 
@@ -200,7 +335,10 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
       />
       <ChoiceGroup
         label="Cuenta"
-        options={data.accounts.map((account) => ({ value: account.id, label: account.name }))}
+        options={data.accounts.map((account) => ({
+          value: account.id,
+          label: account.name + (account.archived ? ' (archivada)' : ''),
+        }))}
         value={draft.accountId}
         disabled={saving}
         onChange={(accountId) => setDraft((current) => ({ ...current, accountId }))}
@@ -214,7 +352,10 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
         label="Categoría"
         options={data.categories
           .filter((category) => category.kind === draft.kind)
-          .map((category) => ({ value: category.id, label: category.name }))}
+          .map((category) => ({
+            value: category.id,
+            label: category.name + (category.archived ? ' (archivada)' : ''),
+          }))}
         value={draft.categoryId}
         disabled={saving}
         onChange={(categoryId) => setDraft((current) => ({ ...current, categoryId }))}
@@ -223,6 +364,19 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
         <Text accessibilityRole="alert" style={[screenStyles.body, { color: theme.danger }]}>
           {errors.categoryId}
         </Text>
+      ) : null}
+      {!data.categories.some((category) => category.kind === draft.kind) ? (
+        <>
+          <Text style={[screenStyles.body, { color: theme.secondary }]}>
+            No hay categorías activas de este tipo. Crea una o reactiva alguna antes de guardar.
+          </Text>
+          <Button
+            label="Administrar categorías"
+            variant="secondary"
+            disabled={saving}
+            onPress={onCategories}
+          />
+        </>
       ) : null}
       <Field
         label="Fecha"
@@ -235,6 +389,21 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
         editable={!saving}
         error={errors.date ?? ''}
       />
+      <AttachmentPanel
+        attachments={proofs}
+        selected={selected}
+        busy={saving}
+        uri={(attachmentId) => attachments.uri(attachmentId)}
+        onSelect={selectProof}
+        onDiscard={(uri) => setSelected((current) => current.filter((entry) => entry.uri !== uri))}
+        onRemove={removeProof}
+        onRetry={(attachment) => {
+          void attachmentAction(() => attachments.retry(attachment));
+        }}
+        onShare={(attachment) => {
+          void attachmentAction(() => attachments.share(attachment));
+        }}
+      />
       {errors.general ? (
         <Text
           accessibilityRole="alert"
@@ -245,14 +414,14 @@ function MovementForm({ data, repository, onDone }: MovementFormProps): ReactEle
         </Text>
       ) : null}
       <Button
-        label={saving ? 'Guardando…' : data.existing ? 'Guardar cambios' : 'Guardar movimiento'}
+        label={saving ? 'Procesando…' : persisted ? 'Guardar cambios' : 'Guardar movimiento'}
         disabled={saving}
         onPress={() => {
           void save();
         }}
       />
       <Button label="Cancelar" variant="secondary" disabled={saving} onPress={onDone} />
-      {data.existing ? (
+      {persisted ? (
         <Button
           label="Eliminar movimiento"
           variant="secondary"
