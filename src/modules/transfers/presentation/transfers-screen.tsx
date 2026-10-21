@@ -6,6 +6,7 @@ import { parseMoney } from '../../../shared/domain/money';
 import { Amount } from '../../../shared/ui/amount';
 import { Button } from '../../../shared/ui/button';
 import { ChoiceGroup } from '../../../shared/ui/choice-group';
+import { DateField } from '../../../shared/ui/date-field';
 import { Field } from '../../../shared/ui/field';
 import { MonthPicker } from '../../../shared/ui/month-picker';
 import { notifications } from '../../../shared/ui/notifications';
@@ -125,7 +126,7 @@ function TransferForm({
         label="Monto en pesos chilenos"
         value={amount}
         onChangeText={setAmount}
-        keyboardType="numbers-and-punctuation"
+        keyboardType="numeric"
         maxLength={24}
         editable={!busy}
       />
@@ -136,13 +137,13 @@ function TransferForm({
         maxLength={120}
         editable={!busy}
       />
-      <Field
+      <DateField
         label="Fecha"
-        hint="AAAA-MM-DD"
         value={date}
-        onChangeText={setDate}
-        maxLength={10}
+        onChange={setDate}
+        maximumDate={businessDateAt(new Date(), 'America/Santiago').value}
         editable={!busy}
+        hint="La transferencia debe ser hoy o una fecha anterior."
       />
       {error ? (
         <Text accessibilityRole="alert" style={[screenStyles.body, { color: theme.danger }]}>

@@ -1,5 +1,6 @@
 import { useCallback, useState, type ReactElement } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { businessDateAt } from '../../../shared/domain/business-date';
 import { Amount, usePrivacy } from '../../../shared/ui/amount';
 import { Button } from '../../../shared/ui/button';
@@ -16,9 +17,7 @@ export interface SummaryScreenProps {
   readonly mode: 'home' | 'statistics';
   readonly onAdd: () => void;
   readonly onAccounts: () => void;
-  readonly onTransfers: () => void;
-  readonly onBudgets: () => void;
-  readonly onSettings: () => void;
+  readonly onMore: () => void;
   readonly onEdit: (id: string) => void;
 }
 
@@ -27,9 +26,7 @@ export function SummaryScreen({
   mode,
   onAdd,
   onAccounts,
-  onTransfers,
-  onBudgets,
-  onSettings,
+  onMore,
   onEdit,
 }: SummaryScreenProps): ReactElement {
   const theme = useTheme();
@@ -53,20 +50,30 @@ export function SummaryScreen({
       ) : (
         <>
           {mode === 'home' ? (
-            <View style={[screenStyles.card, { backgroundColor: theme.surface }]}>
-              <Text style={[screenStyles.caption, { color: theme.secondary }]}>
-                SALDO ACTUAL · CLP
+            <Animated.View
+              entering={FadeInDown.duration(240).reduceMotion(ReduceMotion.System)}
+              style={[screenStyles.card, styles.hero, { backgroundColor: theme.primary }]}
+            >
+              <View style={screenStyles.row}>
+                <Text style={[screenStyles.caption, { color: theme.onPrimary }]}>
+                  SALDO TOTAL · CLP
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={hidden ? 'Mostrar montos' : 'Ocultar montos'}
+                  onPress={toggle}
+                  style={styles.privacyButton}
+                >
+                  <Text style={[screenStyles.caption, { color: theme.onPrimary }]}>
+                    {hidden ? 'Mostrar' : 'Ocultar'}
+                  </Text>
+                </Pressable>
+              </View>
+              <Amount value={state.data.overview.balance} large color={theme.onPrimary} />
+              <Text style={[screenStyles.caption, { color: theme.onPrimary, opacity: 0.85 }]}>
+                Tus cuentas activas, en un solo lugar.
               </Text>
-              <Amount value={state.data.overview.balance} large />
-              <Text style={[screenStyles.caption, { color: theme.secondary }]}>
-                Incluye saldos iniciales y todos los movimientos registrados.
-              </Text>
-              <Button
-                label={hidden ? 'Mostrar montos' : 'Ocultar montos'}
-                variant="secondary"
-                onPress={toggle}
-              />
-            </View>
+            </Animated.View>
           ) : (
             <Button
               label={hidden ? 'Mostrar montos' : 'Ocultar montos'}
@@ -74,52 +81,75 @@ export function SummaryScreen({
               onPress={toggle}
             />
           )}
-          <View style={[screenStyles.card, { backgroundColor: theme.surface }]}>
-            <Text style={[screenStyles.heading, { color: theme.text }]}>Ingresos del mes</Text>
-            <Amount value={state.data.overview.income} prefix="+" />
-            <Text style={[screenStyles.heading, { color: theme.text }]}>Gastos del mes</Text>
-            <Amount value={state.data.overview.expenses} prefix="−" />
+          <View
+            style={[screenStyles.card, styles.monthSummary, { backgroundColor: theme.surface }]}
+          >
+            <View style={styles.metric}>
+              <Text style={[screenStyles.caption, { color: theme.secondary }]}>INGRESOS</Text>
+              <Amount value={state.data.overview.income} prefix="+" />
+            </View>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.metric}>
+              <Text style={[screenStyles.caption, { color: theme.secondary }]}>GASTOS</Text>
+              <Amount value={state.data.overview.expenses} prefix="−" />
+            </View>
           </View>
           {mode === 'home' ? (
             <>
               <Button
-                label="Agregar movimiento"
-                onPress={onAdd}
-                disabled={!state.data.overview.accounts.some((account) => !account.archived)}
-              />
-              <Button
-                label="Transferencias entre cuentas"
-                variant="secondary"
-                onPress={onTransfers}
-              />
-              <Button label="Planificar presupuestos" variant="secondary" onPress={onBudgets} />
-              <Button label="Ajustes de recordatorios" variant="secondary" onPress={onSettings} />
-              <Button
                 label={
-                  state.data.overview.accounts.length === 0
-                    ? 'Crear mi primera cuenta'
-                    : 'Administrar cuentas'
+                  state.data.overview.accounts.some((account) => !account.archived)
+                    ? 'Agregar movimiento'
+                    : 'Crear mi primera cuenta'
                 }
-                variant="secondary"
-                onPress={onAccounts}
+                onPress={
+                  state.data.overview.accounts.some((account) => !account.archived)
+                    ? onAdd
+                    : onAccounts
+                }
               />
-              {state.data.overview.accounts.map((account) => (
-                <View
-                  key={account.id}
-                  style={[screenStyles.card, { backgroundColor: theme.surface }]}
-                >
-                  <Text style={[screenStyles.heading, { color: theme.text }]}>
-                    {account.name}
-                    {account.archived ? ' (archivada)' : ''}
+              <Pressable
+                accessibilityRole="button"
+                onPress={onMore}
+                style={({ pressed }) => [styles.moreLink, { opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={[screenStyles.caption, { color: theme.primary }]}>
+                  Cuentas, presupuestos y ajustes · Ver más
+                </Text>
+              </Pressable>
+              {state.data.overview.accounts.length > 0 ? (
+                <View style={styles.section}>
+                  <Text
+                    accessibilityRole="header"
+                    style={[screenStyles.heading, { color: theme.text }]}
+                  >
+                    Tus cuentas
                   </Text>
-                  <Amount value={account.balance} />
+                  {state.data.overview.accounts.map((account) => (
+                    <View
+                      key={account.id}
+                      style={[styles.accountRow, { backgroundColor: theme.surface }]}
+                    >
+                      <View style={styles.accountName}>
+                        <Text style={[screenStyles.body, { color: theme.text }]}>
+                          {account.name}
+                        </Text>
+                        {account.archived ? (
+                          <Text style={[screenStyles.caption, { color: theme.secondary }]}>
+                            Archivada
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Amount value={account.balance} />
+                    </View>
+                  ))}
                 </View>
-              ))}
+              ) : null}
               <Text
                 accessibilityRole="header"
                 style={[screenStyles.heading, { color: theme.text }]}
               >
-                Últimos movimientos del mes
+                Movimientos recientes
               </Text>
               {state.data.recent.entries.length === 0 ? (
                 <Text style={[screenStyles.body, { color: theme.secondary }]}>
@@ -167,3 +197,24 @@ export function SummaryScreen({
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  hero: { borderRadius: 24, padding: 24 },
+  privacyButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
+  monthSummary: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18 },
+  metric: { flex: 1, gap: 6 },
+  divider: { width: 1, height: 42, marginHorizontal: 12 },
+  moreLink: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
+  section: { gap: 10 },
+  accountRow: {
+    minHeight: 64,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  accountName: { flex: 1, gap: 2 },
+});

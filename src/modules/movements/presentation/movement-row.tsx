@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Amount } from '../../../shared/ui/amount';
 import { screenStyles } from '../../../shared/ui/screen';
 import { useTheme } from '../../../shared/ui/theme';
@@ -17,17 +17,39 @@ export function MovementRow({ movement, onPress }: MovementRowProps): ReactEleme
       accessibilityLabel={`Editar ${movement.description}, ${movement.date}`}
       onPress={onPress}
       style={({ pressed }) => [
-        screenStyles.card,
+        styles.row,
         { backgroundColor: theme.surface, opacity: pressed ? 0.75 : 1 },
       ]}
     >
-      <Text style={[screenStyles.heading, { color: theme.text }]}>{movement.description}</Text>
-      <Text style={[screenStyles.caption, { color: theme.secondary }]}>
-        {movement.kind === 'income' ? 'Ingreso' : 'Gasto'} · {movement.categoryName} ·{' '}
-        {movement.accountName}
-      </Text>
+      <View
+        style={[
+          styles.marker,
+          { backgroundColor: movement.kind === 'income' ? theme.primary : theme.border },
+        ]}
+      />
+      <View style={styles.details}>
+        <Text numberOfLines={1} style={[screenStyles.body, { color: theme.text }]}>
+          {movement.description}
+        </Text>
+        <Text numberOfLines={1} style={[screenStyles.caption, { color: theme.secondary }]}>
+          {movement.categoryName} · {movement.date}
+        </Text>
+      </View>
       <Amount value={movement.amount} prefix={movement.kind === 'income' ? '+' : '−'} />
-      <Text style={[screenStyles.caption, { color: theme.secondary }]}>{movement.date}</Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    minHeight: 72,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  marker: { width: 4, height: 38, borderRadius: 2 },
+  details: { flex: 1, gap: 2 },
+});

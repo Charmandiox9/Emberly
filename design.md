@@ -73,7 +73,7 @@ Comprueba contraste de las combinaciones reales: al menos 4,5:1 en texto normal 
 
 ## Navegación y pantallas
 
-Navegación principal propuesta: **Inicio, Movimientos, Metas y Estadísticas**. Presupuestos se accede desde Inicio; cuentas y ajustes desde el perfil. Usa icono y etiqueta para cada destino. Mantén «Agregar movimiento» fácilmente accesible y fuera de las áreas que ocupa el teclado.
+Navegación principal: **Inicio, Movimientos, Metas, Estadísticas y Más**. Las cuatro primeras pestañas contienen las consultas y acciones financieras de uso frecuente. «Más» agrupa cuentas, categorías, presupuestos y ajustes; las transferencias permanecen junto al historial de movimientos. Usa icono y etiqueta para cada destino. Mantén «Agregar movimiento» fácilmente accesible y fuera de las áreas que ocupa el teclado.
 
 | Pantalla | Jerarquía y contenido |
 | --- | --- |
@@ -131,3 +131,10 @@ Define umbrales de evolución como reglas de dominio comprobables antes de imple
 ## Verificación visual por entrega
 
 Revisa en Android físico los temas claro y oscuro, texto ampliado, montos grandes, listas vacías, formularios con error y persistencia tras guardar. Comprueba que el teclado no tape las acciones, que los gráficos permitan leer sus valores y que Ember deje visible la información financiera. Captura las pantallas modificadas cuando haya aplicación ejecutable y registra los dispositivos y estados realmente revisados.
+
+## Interacciones implementadas
+
+- Los campos de montos CLP usan teclado numérico y los importes se presentan como dígitos sin separadores en el ejemplo del campo. Los saldos iniciales conservan teclado con signo porque aceptan valores negativos.
+- Fechas de movimientos, transferencias y metas se eligen con calendario; el recordatorio usa selector de hora de 24 horas. No se incorpora hora a los movimientos mientras el modelo financiero solo persista una fecha.
+- Inicio prioriza el saldo total, resume ingresos y gastos en una sola superficie y ofrece accesos compactos a tareas relacionadas. La acción principal crea la primera cuenta si no existe una activa.
+- Entrada breve del resumen y respuesta táctil en controles; se respeta la preferencia de movimiento reducido. No se animan las filas de listas ni los cambios de datos frecuentes.

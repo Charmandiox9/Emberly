@@ -29,9 +29,7 @@ export function SummaryRoute({ mode }: SummaryRouteProps): ReactElement {
       repository={finance}
       onAdd={() => router.push('/movement')}
       onAccounts={() => router.push('/accounts')}
-      onTransfers={() => router.push('/transfers')}
-      onBudgets={() => router.push('/budgets')}
-      onSettings={() => router.push('/settings')}
+      onMore={() => router.navigate('/(tabs)/more')}
       onEdit={(id) => router.push({ pathname: '/movement', params: { id } })}
     />
   );

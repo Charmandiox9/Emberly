@@ -14,6 +14,7 @@ interface AmountProps {
   readonly value: Money;
   readonly large?: boolean;
   readonly prefix?: string;
+  readonly color?: string;
 }
 const PrivacyContext = createContext<Privacy | null>(null);
 export function PrivacyProvider({ children }: PrivacyProviderProps): ReactElement {
@@ -29,13 +30,13 @@ export function usePrivacy(): Privacy {
   if (!privacy) throw new Error('Falta el proveedor de privacidad.');
   return privacy;
 }
-export function Amount({ value, large = false, prefix = '' }: AmountProps): ReactElement {
+export function Amount({ value, large = false, prefix = '', color }: AmountProps): ReactElement {
   const theme = useTheme();
   const { hidden } = usePrivacy();
   return (
     <Text
       accessibilityLabel={hidden ? 'Monto oculto' : `${prefix}${formatMoney(value)}`}
-      style={[large ? styles.large : styles.amount, { color: theme.text }]}
+      style={[large ? styles.large : styles.amount, { color: color ?? theme.text }]}
     >
       {hidden ? '••••••' : `${prefix}${formatMoney(value)}`}
     </Text>

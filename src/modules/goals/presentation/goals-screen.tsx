@@ -5,6 +5,7 @@ import { createBusinessDate } from '../../../shared/domain/business-date';
 import { parseMoney, type Money } from '../../../shared/domain/money';
 import { Amount, usePrivacy } from '../../../shared/ui/amount';
 import { Button } from '../../../shared/ui/button';
+import { DateField } from '../../../shared/ui/date-field';
 import { Field } from '../../../shared/ui/field';
 import { notifications } from '../../../shared/ui/notifications';
 import { Progress } from '../../../shared/ui/progress';
@@ -104,22 +105,20 @@ export function GoalsScreen({ repository, onActivity }: GoalsScreenProps): React
         label="Objetivo en pesos chilenos"
         value={target}
         onChangeText={setTarget}
-        placeholder="Por ejemplo, 100.000"
+        placeholder="Por ejemplo, 100000"
         maxLength={24}
-        keyboardType="numbers-and-punctuation"
+        keyboardType="numeric"
         editable={!saving}
         error={errors.target ?? ''}
       />
-      <Field
+      <DateField
         label="Fecha objetivo (opcional)"
         value={deadline}
-        onChangeText={setDeadline}
-        placeholder="AAAA-MM-DD"
-        maxLength={10}
-        autoCapitalize="none"
+        onChange={setDeadline}
+        optional
         editable={!saving}
         error={errors.deadline ?? ''}
-        hint="Una fecha anterior permite conservar una meta histórica. No se retiran aportes al vencer."
+        hint="También puedes dejarla sin fecha. Al vencer no se retiran aportes."
       />
       {editing ? (
         <Text style={[screenStyles.body, { color: theme.secondary }]}>

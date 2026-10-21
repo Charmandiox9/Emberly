@@ -167,8 +167,8 @@ export function BudgetsScreen({
         label="Límite mensual en pesos chilenos"
         value={limit}
         onChangeText={setLimit}
-        placeholder="Por ejemplo, 50.000"
-        keyboardType="numbers-and-punctuation"
+        placeholder="Por ejemplo, 50000"
+        keyboardType="numeric"
         maxLength={24}
         editable={!saving}
         error={limitError}

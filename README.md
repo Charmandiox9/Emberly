@@ -7,15 +7,16 @@ React Native + Expo SDK 57, TypeScript estricto y persistencia local SQLite.
 
 La versión local incluye cuentas CLP, registro/edición/eliminación de ingresos y gastos,
 historial filtrable con paginación, saldos actuales, comparación mensual y tendencia de seis meses con gastos por categoría.
-Inicio, Movimientos, Metas y Estadísticas tienen navegación por pestañas; cuentas y formulario
-se abren como pantallas independientes. También incluye transferencias con anulación,
+Inicio, Movimientos, Metas, Estadísticas y Más tienen navegación por pestañas; cuentas y formulario
+se abren como pantallas independientes. La pestaña Más reúne cuentas, categorías, presupuestos y ajustes; las transferencias están junto al historial. También incluye transferencias con anulación,
 edición/archivo de cuentas, categorías personalizadas, presupuestos mensuales y metas con aportes/retiros.
 Incluye recordatorios diarios locales configurables. Autenticación Google, sincronización remota, push y la mascota siguen pendientes.
 
 Inicio muestra el **saldo actual** calculado desde saldos iniciales y movimientos.
 El selector mensual filtra flujos e historial, sin convertirlo en saldo histórico.
 Cuentas distingue saldo inicial y saldo actual. No se cargan movimientos ficticios.
-Usa datos de prueba hasta que exista respaldo/restauración.
+La app ya permite exportar y restaurar respaldos locales. Hasta validar esos recorridos en un
+teléfono físico, usa datos de prueba y conserva una copia fuera del dispositivo.
 
 ## Entorno y ejecución
 
@@ -129,6 +130,7 @@ no deben interpretarse como verificaciones ya ejecutadas.
 - [Metas y asignaciones](docs/goals.md): aportes/retiros, disponible global, faltantes y recorrido de prueba.
 - [Estadísticas](docs/statistics.md): cálculos, comparación, tendencia, privacidad y navegación al historial filtrado.
 - [Recordatorios](docs/reminders.md): configuración, permisos, recuperación y validación física pendiente. La nueva dependencia requiere regenerar el cliente de desarrollo EAS.
+- [Respaldo local](docs/backup.md): exportación y restauración JSON con comprobantes y confirmación de reemplazo.
 
 El almacenamiento actual no está cifrado; no contiene credenciales ni usa servicios
 remotos. El respaldo automático Android está desactivado en la configuración inicial.

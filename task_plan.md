@@ -1,12 +1,13 @@
 # Plan de trabajo: Emberly para Android
 
 Fecha de elaboración: 20 de octubre de 2026.
+Última revisión de estado: 21 de octubre de 2026.
 
 ## Objetivo y estado
 
 Entregar una primera versión Android instalable, usable sin conexión, que permita administrar cuentas, ingresos, gastos, presupuestos y metas, consultar estadísticas y recibir acompañamiento positivo de Ember.
 
-La fase 1 mantiene pendiente su validación física; se avanza en las tareas independientes de las fases 2 y 3. Las fases se marcan completas únicamente al cumplir sus criterios de salida. [AGENTS.md](AGENTS.md) define las reglas técnicas y [design.md](design.md) las visuales; este documento registra el orden y el alcance del trabajo.
+La aplicación ya cubre buena parte de las funciones locales de las fases 1 a 6, pero ninguna fase se cierra hasta cumplir su criterio de salida. Ahora el mayor pendiente común es generar/instalar un build de desarrollo y hacer la validación en Android físico. La nube, la progresión de Ember y la beta requieren trabajo adicional independiente. [AGENTS.md](AGENTS.md) define las reglas técnicas y [design.md](design.md) las visuales; este documento registra el orden y el alcance del trabajo.
 
 ## Alcance de la primera versión
 
@@ -50,26 +51,29 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 - [x] Revisar Node, gestor de paquetes y espacio disponible; seleccionar versiones compatibles de Expo y dependencias mediante documentación vigente al implementar.
 - [x] Crear el proyecto Expo con TypeScript estricto y Expo Router, un único lockfile y configuración Android.
 - [x] Configurar lint, formato, chequeo de tipos y herramientas de pruebas unitarias y de integración compatibles con el proyecto.
-- [ ] Definir módulos y contratos públicos para cuentas, movimientos, presupuestos, metas y hábitos, sin crear implementaciones vacías para funciones futuras.
+- [x] Definir módulos y contratos públicos para cuentas, movimientos, presupuestos y metas.
+- [ ] Definir el modelo y los contratos de hábitos junto con la progresión de Ember en fase 5.
 - [x] Especificar dinero, redondeo, límites de enteros, fecha de negocio, zona horaria, saldo inicial y transferencias.
 - [x] Definir las metas como asignaciones sobre dinero existente: un aporte no crea ingresos ni duplica gastos. Especificar límites, retiros y comportamiento si se modifica un movimiento relacionado.
-- [ ] Preparar SQLite, primera migración, control de versión y adaptadores de persistencia; probar apertura, escritura y actualización de la base con el motor real en Android.
+- [x] Preparar SQLite, migraciones versionadas, control de versión y adaptadores de persistencia; probar apertura, escritura y actualización con SQLite real en Node.
+- [ ] Verificar apertura, escritura, migración y persistencia tras reinicio con SQLite nativo en Android físico.
 - [x] Crear `.gitignore`, `README.md`, documentación de dominio, ADR de arquitectura inicial y `CHANGELOG.md`. Crear `.env.example` documentado al introducir variables; no inventar variables innecesarias.
-- [ ] Configurar perfiles EAS de desarrollo, preview y producción. Generar una compilación de desarrollo e instalarla en Android físico para validar el flujo sin Android Studio.
+- [x] Configurar perfiles EAS de desarrollo, preview y producción en `eas.json`.
+- [ ] Generar una compilación de desarrollo e instalarla en Android físico para validar el flujo sin Android Studio.
 
 **Criterio de salida:** app base abierta en el teléfono, datos mínimos persistentes tras reinicio, reglas monetarias y fechas con pruebas, comandos de verificación operativos y build Android exitoso identificado. Si falta acceso a EAS o teléfono, registrar qué verificación falta y mantener pendiente el criterio correspondiente.
 
 **Entregable:** base ejecutable y documentación para reproducir el entorno.
 
-**Avance de implementación:** cuentas y sus contratos públicos implementados; los demás módulos se crearán con sus funcionalidades. Primera migración y repositorio probados con SQLite real en Node. Perfiles EAS preparados, pero sin sesión Expo disponible para enviar el build. La verificación del adaptador SQLite, la interfaz y accesibilidad en Android físico siguen pendientes. Se adelantaron el formulario de cuentas, los tokens básicos y los toasts para obtener un primer recorrido funcional, sin dar por terminadas las fases 2 y 3.
+**Avance de implementación:** módulos locales financieros implementados y sus contratos públicos definidos. Las migraciones y repositorios tienen pruebas con SQLite real en Node. Los perfiles EAS están preparados; todavía falta una compilación de desarrollo instalada y probada en Android. La verificación física de SQLite, interfaz y accesibilidad mantiene abierta esta fase.
 
 ### Fase 2: sistema visual y navegación
 
 **Estado:** in_progress. **Depende de:** fase 1.
 
 - [x] Implementar tokens de color, Nunito local, tipografía, espaciado y temas de `design.md`.
-- [ ] Crear componentes reutilizables: botones, campos, tarjetas, filas de movimiento, selector de periodo, indicador de progreso y estados de pantalla.
-- [ ] Implementar navegación Inicio, Movimientos, Metas y Estadísticas; accesos a presupuestos, cuentas y ajustes.
+- [x] Crear componentes reutilizables para botones, campos, tarjetas, filas, selector de periodo, progreso y estados de pantalla.
+- [x] Implementar navegación Inicio, Movimientos, Metas, Estadísticas y Más; agrupar cuentas, categorías, presupuestos y ajustes en Más.
 - [x] Incorporar un adaptador compartido de notificaciones con `sonner-native` y un único `Toaster`, previa comprobación de compatibilidad.
 - [ ] Diseñar la primera versión original de Ember y del símbolo de marca. Mantener la dirección 3D como referencia; optimizar tamaño y uso móvil de los assets elegidos.
 - [ ] Validar formularios con teclado, áreas seguras, TalkBack, fuentes grandes, ambos temas y movimiento reducido.
@@ -88,7 +92,8 @@ Las pruebas y documentación acompañan cada fase. La fase 6 incorpora verificac
 - [x] Registrar y anular transferencias atómicas con auditoría, cuentas diferentes y sin doble conteo; historial separado por mes/cuenta y paginación. Validación física pendiente.
 - [x] Mostrar saldos, ingresos/gastos del periodo y movimientos recientes en Inicio; permitir ocultar montos.
 - [x] Implementar historial con filtros de periodo, tipo, categoría y cuenta; prever listas extensas sin cargar innecesariamente todos los registros.
-- [ ] Probar cálculo de saldo, edición, eliminación, fallos de escritura, doble pulsación de guardar y persistencia tras reiniciar.
+- [x] Cubrir cálculo de saldo, edición, eliminación, fallos de escritura, idempotencia y persistencia con pruebas unitarias/de integración en SQLite.
+- [ ] Verificar el recorrido y persistencia tras reiniciar en Android físico, incluido modo avión.
 
 **Criterio de salida:** el recorrido crear cuenta → registrar ingreso → registrar gasto → transferir → editar → reiniciar conserva exactamente los saldos esperados, también en modo avión. Una falla de persistencia no anuncia éxito ni deja una transferencia parcial.
 
@@ -163,17 +168,19 @@ La fase 3A puede avanzar sin servicios contratados; 3B requiere configurar los p
 
 ### Fase 6: respaldo, recuperación y beta Android
 
-**Estado:** pending. **Depende de:** fase 5.
+**Estado:** in_progress. **Depende de:** fase 5. Exportación y restauración JSON implementadas; beta pendiente.
 
-- [ ] Exportar respaldo JSON versionado con todas las entidades y relaciones necesarias; explicar que contiene información financiera y si está cifrado.
-- [ ] Restaurar con validación previa, detección de referencias inválidas y operación transaccional. Para la primera versión usar restauración por reemplazo confirmado y respaldo previo; la fusión se deja fuera de alcance.
+- [x] Exportar respaldo JSON versionado con tablas SQLite, colas, preferencias y comprobantes verificados; avisar que contiene información financiera sin cifrar.
+- [x] Restaurar con validación previa de esquema, columnas, valores y comprobantes; reemplazo confirmado, respaldo previo, transacción SQLite y recuperación de archivos tras interrupciones. La fusión se deja fuera de alcance.
 - [ ] Probar exportar → restaurar en una instalación limpia y comparar saldos, movimientos, presupuestos, metas y logros.
-- [ ] Incluir comprobantes en el respaldo y definir restauración de identidad, identificadores y cola sin duplicar datos remotos.
+- [x] Incluir comprobantes y restaurar sus identificadores y cola local; la sincronización remota no se ejecuta automáticamente.
 - [ ] Probar archivos corruptos, versiones incompatibles e interrupciones sin destruir los datos actuales.
 - [ ] Ejecutar el recorrido completo: primer uso, carga manual, planificación, estadísticas, cierre/reapertura, modo avión y recuperación.
 - [ ] Revisar accesibilidad, temas, teclado, listas extensas, privacidad de logs y permisos; documentar resultados y límites de lo probado.
 - [ ] Preparar iconos, splash, identificador Android y versión; generar APK preview instalable con build exitoso del estado final.
-- [ ] Actualizar README, guía breve de uso, respaldo/restauración, notas de versión y problemas conocidos. Entregar APK y evidencia de verificaciones.
+- [x] Actualizar README, guía de respaldo/restauración y notas de versión.
+- [ ] Preparar guía breve de uso y registrar problemas conocidos observados en la prueba física.
+- [ ] Entregar APK preview y evidencia de las verificaciones físicas.
 
 **Criterio de salida:** APK instalado en Android físico, flujos críticos y respaldo/restauración verificados, sin fallos críticos de integridad pendientes y documentación reproducible. Preparar el AAB de producción cuando corresponda; publicar en Google Play es una tarea posterior con requisitos propios.
 

@@ -6,6 +6,7 @@ import type { ManagedCategory, CategoryRepository } from '../../categories';
 import { businessDateAt } from '../../../shared/domain/business-date';
 import { Button } from '../../../shared/ui/button';
 import { ChoiceGroup, type ChoiceOption } from '../../../shared/ui/choice-group';
+import { DateField } from '../../../shared/ui/date-field';
 import { Field } from '../../../shared/ui/field';
 import { notifications } from '../../../shared/ui/notifications';
 import { ResourceFeedback } from '../../../shared/ui/resource-feedback';
@@ -315,10 +316,10 @@ function MovementForm({
       />
       <Field
         label="Monto en pesos chilenos"
-        placeholder="Por ejemplo, 25.000"
+        placeholder="Por ejemplo, 25000"
         value={draft.amount}
         onChangeText={(amount) => setDraft((current) => ({ ...current, amount }))}
-        keyboardType="numbers-and-punctuation"
+        keyboardType="numeric"
         maxLength={24}
         editable={!saving}
         error={errors.amount ?? ''}
@@ -378,16 +379,14 @@ function MovementForm({
           />
         </>
       ) : null}
-      <Field
+      <DateField
         label="Fecha"
-        hint="AAAA-MM-DD. Puedes registrar movimientos de días anteriores."
-        placeholder="2026-10-20"
         value={draft.date}
-        onChangeText={(date) => setDraft((current) => ({ ...current, date }))}
-        maxLength={10}
-        autoCapitalize="none"
+        onChange={(date) => setDraft((current) => ({ ...current, date }))}
+        maximumDate={businessDateAt(new Date(), 'America/Santiago').value}
         editable={!saving}
         error={errors.date ?? ''}
+        hint="Puedes elegir cualquier día hasta hoy."
       />
       <AttachmentPanel
         attachments={proofs}

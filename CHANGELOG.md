@@ -2,6 +2,7 @@
 
 ## Sin publicar
 
+- Añadida exportación y restauración local de respaldo JSON versionado en Ajustes. La restauración valida el esquema, las tablas y los hashes de comprobantes, exige respaldo de seguridad y reemplaza el perfil dentro de una transacción recuperable. El archivo no está cifrado.
 - Porcentajes de presupuestos y metas calculados con enteros para conservar valores exactos como 29 % y 57 %, con pruebas de regresión.
 - Corregida la carga de recordatorios cuando falta `ExpoTopicSubscriptionModule`: comprobación nativa antes de importar Notifications y estado explícito de cliente requerido, conservando preferencias.
 - Recordatorio diario local opcional con horario del teléfono, permiso solo al activar, canal privado y contenido sin datos financieros.
@@ -59,3 +60,21 @@
 
 Pendientes de validar: build nativo EAS, persistencia del adaptador Expo en Android
 físico, revisión visual y accesibilidad en dispositivo. No hay APK publicado.
+
+# 21 de octubre de 2026: mejora de formularios e inicio
+
+- Campos numéricos con teclado numérico; calendario para fechas de movimientos, transferencias y metas; selector de hora de 24 horas para recordatorios. Se mantienen teclado con signo para saldos iniciales negativos.
+- Inicio con saldo destacado, resumen mensual en dos columnas, accesos compactos, cuentas y movimientos más escaneables; primera cuenta como acción principal cuando aplica.
+- Feedback visual de foco, pulsación y entrada del resumen con respeto a movimiento reducido. Expo UI se usa para los selectores Compose incluidos en Expo Go para Android; los recordatorios remotos siguen requiriendo development build.
+- Verificación y revisión visual en Android pendientes.
+
+## Corrección de animación en Reanimated
+
+- El runtime rechazaba la curva CSS `cubic-bezier(...)` usada en las transiciones de botones y campos. Se reemplazó por el valor predefinido compatible `ease-out`.
+- TypeScript, lint y formato aprobados; 197 pruebas pasaron tras reintentar Vitest con permisos temporales; export Android aprobada con 2025 módulos. El error reportado no se reproduce en el código corregido; falta confirmación en Expo Go.
+
+## Host Compose y organización de navegación
+
+- Envueltos los selectores Compose de fecha/hora en `<Host matchContents>` como exige Expo UI.
+- Añadida la pestaña «Más» para cuentas, categorías, presupuestos y ajustes. Inicio queda centrado en saldo y actividad; transferencias y categorías siguen disponibles desde Movimientos.
+- TypeScript, lint, formato y diff aprobados; 197 pruebas pasaron en 21 archivos y export Android aprobada con 2027 módulos y bundle Hermes de 4,7 MB. La selección Compose en Expo Go aún requiere confirmación manual.

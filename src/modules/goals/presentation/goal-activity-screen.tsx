@@ -124,7 +124,7 @@ export function GoalActivityScreen({ repository, goalId }: GoalActivityProps): R
             value={amount}
             onChangeText={setAmount}
             maxLength={24}
-            keyboardType="numbers-and-punctuation"
+            keyboardType="numeric"
             editable={!saving}
             hint="Retirar libera la asignación; no es un ingreso y no cambia el saldo de tus cuentas."
             error={error}

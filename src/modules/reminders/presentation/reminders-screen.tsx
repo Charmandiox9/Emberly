@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactElement } from 'rea
 import { AppState, Linking, Text, View } from 'react-native';
 import { Button } from '../../../shared/ui/button';
 import { ChoiceGroup, type ChoiceOption } from '../../../shared/ui/choice-group';
-import { Field } from '../../../shared/ui/field';
+import { TimeField } from '../../../shared/ui/date-field';
 import { notifications } from '../../../shared/ui/notifications';
 import { ResourceFeedback } from '../../../shared/ui/resource-feedback';
 import { Screen, screenStyles } from '../../../shared/ui/screen';
@@ -152,14 +152,12 @@ function ReminderForm({ service, initial }: ReminderFormProps): ReactElement {
         disabled={busy}
         onChange={(value) => setEnabled(value === 'on')}
       />
-      <Field
+      <TimeField
         label="Hora del teléfono (HH:MM)"
         value={time}
-        onChangeText={setTime}
-        maxLength={5}
-        keyboardType="numbers-and-punctuation"
+        onChange={setTime}
         editable={!busy}
-        hint="Por ejemplo, 20:00. Android puede retrasar el aviso por ahorro de batería."
+        hint="Usa el horario de 24 horas. Android puede retrasar el aviso por ahorro de batería."
         error={error}
       />
       <Button

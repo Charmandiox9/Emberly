@@ -177,3 +177,33 @@
 - Detectada pérdida de un punto porcentual por coma flotante en presupuestos y metas: 29/100 mostraba 28 % y 57/100 mostraba 56 %. Cuatro regresiones reprodujeron el fallo; se sustituyó el cociente por BigInt, sin alterar montos guardados.
 - Corregida la guía de sincronización que todavía afirmaba ausencia de notificaciones del sistema: existen recordatorios locales, quedan pendientes push y validación física.
 - Verificación final para los commits: `npm run verify` aprobado con TypeScript, lint sin advertencias, 197 pruebas en 21 archivos y formato. `npm run export:android` aprobado con 2019 módulos y bundle Hermes de 4,6 MB. Sin APK ni validación física; servicios remotos pendientes. Cambios agrupados en reglas, implementación integrada con sus guías y cierre documental; no se hizo push.
+
+## 21 de octubre de 2026: exportación de respaldo local
+
+- Añadida exportación JSON versionada desde Ajustes. Reúne todas las tablas y colas en una transacción SQLite; incluye preferencias y comprobantes listos, que se vuelven a validar por SHA-256. Si falta un archivo o su copia está incompleta, cancela el respaldo.
+- El diálogo de Android permite guardar o compartir el archivo. La pantalla informa que el contenido financiero y los comprobantes no están cifrados. La restauración y la validación física siguen pendientes; no se debe eliminar la app confiando solo en la exportación.
+- TypeScript, lint sin advertencias, formato y `npm run export:android` aprobados; bundle Hermes de 4,6 MB con 2024 módulos. El primer export falló al escribir archivos temporales restringidos; el reintento autorizado pasó. No se agregaron ni ejecutaron pruebas automatizadas en este incremento. Restore/import y validación física siguen pendientes.
+
+## 21 de octubre de 2026: restauración de respaldo local
+
+- Ajustes permite elegir un JSON y exige generar/compartir un respaldo de seguridad antes de confirmar la sustitución. Tras restaurar, vuelve a Inicio para recargar los datos.
+- La importación valida versión de esquema, tablas/columnas, valores, referencias de archivos y SHA-256; restaura tablas y colas en una transacción y prepara los comprobantes antes del cambio. Un manifiesto durable permite recuperar archivos tras el cierre inesperado.
+- Documentación y plan actualizados. Pendiente ejecutar chequeos y export Android; no se agregaron ni ejecutaron pruebas automatizadas en este incremento. Validación en dispositivo físico pendiente.
+- Endurecida la creación del manifiesto: se escribe en un temporal y se mueve antes de iniciar el reemplazo, conservando intactos los datos si la preparación del registro se interrumpe. TypeScript, lint, formato, `git diff --check` y `npm run export:android` aprobados; 2024 módulos y bundle Hermes de 4,6 MB. No se agregaron ni ejecutaron pruebas automatizadas. La restauración real, interrupciones y recuperación requieren aún validación en Android físico.
+
+# 21 de octubre de 2026: formularios e interfaz de inicio
+
+- Montos usan el teclado numérico. Movimientos/transferencias limitan el calendario a hoy o antes; metas mantienen fecha opcional; recordatorios permiten elegir hora en formato 24 h.
+- Se actualizó el resumen de inicio, navegación de accesos y filas del historial, además de feedback táctil y foco con respeto a movimiento reducido.
+- TypeScript, lint, formato, `git diff --check` y export Android aprobados. La suite pasó 197 pruebas en 21 archivos; Expo exportó 2025 módulos con bundle Hermes de 4,7 MB. La primera ejecución de Vitest falló al renombrar temporales de Windows; el reintento con permisos temporales ampliados pasó. Revisión visual en Expo Go/teléfono pendiente.
+
+# 21 de octubre de 2026: compatibilidad de easing
+
+- El reporte confirmó que Reanimated rechaza la función `cubic-bezier` CSS de los estilos animados de botones y campos. Se cambió a `ease-out`, entre las curvas predefinidas soportadas.
+- TypeScript y lint aprobados; `npm test` pasó 197 pruebas tras reintento autorizado; `npm run export:android` aprobó con 2025 módulos y bundle Hermes de 4,7 MB. Falta comprobar que Inicio renderiza y que botones/campos animan en Expo Go.
+
+# 21 de octubre de 2026: host Compose y navegación
+
+- Los selectores Material 3 ahora se montan dentro de `<Host matchContents>`, sin una vista nativa intermedia entre Host y el diálogo Compose.
+- Añadida pestaña «Más» para cuentas, categorías, presupuestos y ajustes; se reduce la lista de accesos de Inicio y las transferencias quedan junto a Movimientos. Documentada la organización de pestañas.
+- TypeScript, lint, formato y diff aprobados; 197 pruebas pasaron en 21 archivos y export Android aprobada con 2027 módulos y bundle Hermes de 4,7 MB. Falta confirmar los dos selectores y la pestaña Más en Expo Go.

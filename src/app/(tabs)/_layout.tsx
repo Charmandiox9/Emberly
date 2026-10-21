@@ -37,7 +37,8 @@ export default function TabLayout(): ReactElement {
         tabBarActiveTintColor: theme.text,
         tabBarInactiveTintColor: theme.secondary,
         tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.border },
-        tabBarLabelStyle: { fontFamily: typography.bold, fontSize: 12 },
+        tabBarLabelStyle: { fontFamily: typography.bold, fontSize: 11 },
+        tabBarItemStyle: { flex: 1, minWidth: 0 },
         tabBarHideOnKeyboard: true,
       }}
     >
@@ -78,6 +79,13 @@ export default function TabLayout(): ReactElement {
           tabBarIcon: ({ color }) => (
             <TabIcon color={color} path="M4 21V11h4v10m2 0V3h4v18m2 0V7h4v14" />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'Más',
+          tabBarIcon: ({ color }) => <TabIcon color={color} path="M5 12h.01M12 12h.01M19 12h.01" />,
         }}
       />
     </Tabs>
